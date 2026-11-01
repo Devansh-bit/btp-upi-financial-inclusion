@@ -1,2 +1,2 @@
 file,source_url,source_sha256,table,pdf_pages,method,date
-population_ncp2020.csv,https://nhm.gov.in/New_Updates_2018/Report_Population_Projection_2019.pdf,9a9031c9c75d609e03ab94ce0ac6115cb9d8a9ab82d1b18a47b78e90ae01331b,Table 8,47-59,"pdftotext -layout -f 47 -l 59, parsed by script; Persons column",2026-11-01
+population_ncp2020.csv,https://nhm.gov.in/New_Updates_2018/Report_Population_Projection_2019.pdf,9a9031c9c75d609e03ab94ce0ac6115cb9d8a9ab82d1b18a47b78e90ae01331b,Table 8,47-59,"python -m btpdata.extract_ncp (pdftotext -layout -f 47 -l 59; Persons column)",2026-11-01
