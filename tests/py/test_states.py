@@ -49,3 +49,7 @@ def test_samples():
 
 def test_normalise_strips_diacritics():
     assert normalise("Chhattīsgarh") == "chhattisgarh"
+
+
+def test_cpi_merged_unit_name():
+    assert to_state_id("The Dadra And Nagar Haveli And Daman And Diu") == "dnh_dd"
