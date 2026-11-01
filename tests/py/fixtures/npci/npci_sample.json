@@ -1,0 +1,86 @@
+{
+ "retrieved": "2026-11-01",
+ "endpoint": "fixture",
+ "months": {
+  "2025-Apr": {
+   "status": 200,
+   "data": {
+    "totalCount": 4,
+    "results": [
+     {
+      "state_union_territory": "MAHARASHTRA",
+      "district": null,
+      "volume_in_mn": "2382.34",
+      "value_in_cr": "2,78,375.41",
+      "volume_contribution": "13.31%",
+      "value_contribution": "11.62%"
+     },
+     {
+      "state_union_territory": "LADAKH",
+      "district": null,
+      "volume_in_mn": "3.63",
+      "value_in_cr": "651.93",
+      "volume_contribution": "0.02%",
+      "value_contribution": "0.03%"
+     },
+     {
+      "state_union_territory": "JAMMU & KASHMIR",
+      "district": null,
+      "volume_in_mn": "88.43",
+      "value_in_cr": "11544.77",
+      "volume_contribution": "0.49%",
+      "value_contribution": "0.48%"
+     },
+     {
+      "state_union_territory": "Unclassified#",
+      "district": null,
+      "volume_in_mn": "4928.3",
+      "value_in_cr": "6,16,518.29",
+      "volume_contribution": "27.56%",
+      "value_contribution": "25.76%"
+     }
+    ]
+   }
+  },
+  "2026-Mar": {
+   "status": 200,
+   "data": {
+    "totalCount": 4,
+    "results": [
+     {
+      "state_union_territory": "MAHARASHTRA Total",
+      "district": null,
+      "volume_in_mn": "2263.24",
+      "value_in_cr": "276685.31",
+      "volume_contribution": "0.10%",
+      "value_contribution": "0.09%"
+     },
+     {
+      "state_union_territory": "KARNATAKA Total",
+      "district": null,
+      "volume_in_mn": "1181.05",
+      "value_in_cr": "171403.92",
+      "volume_contribution": "0.05%",
+      "value_contribution": "0.06%"
+     },
+     {
+      "state_union_territory": "MAHARASHTRA",
+      "district": "MUMBAI SUBURBAN",
+      "volume_in_mn": "580.21",
+      "value_in_cr": "58927.73",
+      "volume_contribution": "0.03%",
+      "value_contribution": "0.02%"
+     },
+     {
+      "state_union_territory": "Unclassified #",
+      "district": null,
+      "volume_in_mn": "9902.66",
+      "value_in_cr": "1139245.93",
+      "volume_contribution": "0.44%",
+      "value_contribution": "0.39%"
+     }
+    ]
+   }
+  }
+ }
+}
