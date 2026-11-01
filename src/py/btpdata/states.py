@@ -1,6 +1,7 @@
 """State-name crosswalk: maps raw state names from any source to a state_id."""
 import csv
 import re
+import unicodedata
 from pathlib import Path
 
 _WHITESPACE = re.compile(r"\s+")
@@ -11,7 +12,9 @@ class UnknownStateError(ValueError):
 
 
 def normalise(raw: str) -> str:
-    return _WHITESPACE.sub(" ", raw.lower().replace("&", "and").strip())
+    decomposed = unicodedata.normalize("NFKD", raw)
+    ascii_form = "".join(c for c in decomposed if not unicodedata.combining(c))
+    return _WHITESPACE.sub(" ", ascii_form.lower().replace("&", "and").strip())
 
 
 def _load_crosswalk() -> dict[str, str]:

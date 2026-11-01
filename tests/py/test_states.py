@@ -22,6 +22,8 @@ PHONEPE_36 = [
     ("dadra & nagar haveli & daman & diu", "dnh_dd"),
     ("Dadra and Nagar Haveli", "dnh_dd"), ("Daman and Diu", "dnh_dd"),
     ("Uttaranchal", "uttarakhand"),
+    ("Bihār", "bihar"), ("Dādra and Nagar Haveli and Damān and Diu", "dnh_dd"),
+    ("Jammu and Kashmīr", "jammu_kashmir"),
 ])
 def test_variants(raw, sid):
     assert to_state_id(raw) == sid
@@ -43,3 +45,7 @@ def test_phonepe_names():
 def test_samples():
     assert len(MAIN_SAMPLE) == 30 and len(ALL_IDS) == 35
     assert set(MAIN_SAMPLE) <= set(ALL_IDS)
+
+
+def test_normalise_strips_diacritics():
+    assert normalise("Chhattīsgarh") == "chhattisgarh"
