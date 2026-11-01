@@ -1,0 +1,22 @@
+# LaTeX build files
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.nav
+*.snm
+# Data (origin recorded in data/raw/*/manifest.csv)
+data/raw/
+# Python / R
+__pycache__/
+.venv/
+.Rhistory
+.Rproj.user/
+renv/library/

@@ -1,0 +1,250 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\setlist{nosep}
+\usepackage{microtype}
+\setlength{\emergencystretch}{3em}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\title{Design Specification\\[2pt]\large Digital Payments (UPI) and Financial Inclusion across Indian States}
+\author{BTP, IIT Kharagpur --- Supervisor: Prof.\ Rudra Prakash Pradhan (VGSOM)}
+\date{1 November 2026}
+
+\begin{document}
+\maketitle
+
+\section{Purpose and success criteria}
+
+\paragraph{Goal.} A BTP thesis (BTP-I and BTP-II) and, after it, a co-authored journal paper
+(Elsevier \texttt{elsarticle} format, TFSC style).
+
+\paragraph{Research questions} (from \texttt{proposal.txt}):
+\begin{enumerate}
+  \item RQ1: Does higher digital payment adoption raise financial inclusion (FI) in a state?
+  \item RQ2: Does adoption contribute to state-level economic growth, with controls?
+  \item RQ3: Is the causality bidirectional?
+  \item RQ4: Is the effect stronger in states with higher internet access?
+\end{enumerate}
+
+\paragraph{Success criteria.}
+\begin{enumerate}
+  \item A reproducible state panel: one command rebuilds all data and outputs from raw files.
+  \item A state FI index with documented weights.
+  \item Results for RQ1--RQ4 that state their limits, and that the student can defend in the viva.
+  \item A validation of the adoption proxy (PhonePe Pulse) against official NPCI state data.
+\end{enumerate}
+
+\paragraph{Constraints found during research (verified 1 November 2026).}
+\begin{itemize}
+  \item NPCI publishes state-wise UPI data only from April 2025 (Q1 FY2025-26).
+        About 27.5\% of FY2024-25 volume has no state attribution.
+  \item PhonePe Pulse (\url{https://github.com/PhonePe/pulse}, branch \texttt{main}) gives state-level
+        quarterly transaction count, amount, and registered users from 2018Q1 to 2026Q2.
+        Licence: CDLA-Permissive-2.0. PhonePe has about 46\% of UPI volume.
+  \item The RBI Financial Inclusion Index is national only. No official state FI index exists.
+  \item The PMJDY site shows only the current state snapshot, with no history.
+  \item NSDP is annual. TRAI reports internet data by telecom circle, not by state.
+\end{itemize}
+
+\paragraph{Format rule.} All written outputs are in \LaTeX: reports and thesis (\texttt{report} class or the
+department template), slides (Beamer), paper (\texttt{elsarticle}). R writes tables as \texttt{.tex}
+files and figures as PDF; documents include them with \verb|\input| and \verb|\includegraphics|.
+
+\section{Approach}
+
+Two-tier state panel (selected). A district panel stays as a possible extension for the paper, to be
+checked after BTP-I.
+
+\begin{description}
+  \item[Tier 1, quarterly] 2018Q1--2026Q2 ($T \approx 34$, $N \approx 30$). Adoption $\leftrightarrow$
+        quarterly FI. Answers RQ1, RQ3, RQ4.
+  \item[Tier 2, annual] FY2018-19 to the last NSDP year ($T \approx 7$). Adoption $\to$ growth (RQ2),
+        and a broader annual FI index.
+  \item[Validation layer] PhonePe vs NPCI state data, April 2025 onwards.
+\end{description}
+
+Rejected: an annual-only panel ($T \approx 7$ gives almost no power to unit-root, Granger, and panel VAR
+tests); a district panel as the core (PhonePe district coverage not confirmed; no district GDP).
+
+\section{Sample and variables}
+
+\paragraph{Sample.} Main: 28 states, Delhi, and Jammu \& Kashmir (Ladakh merged into J\&K for
+consistency after the 2019 reorganisation). Robustness: (i) all 36 states and UTs; (ii) the 20 major
+states of Pradhan et al.\ (2021).
+
+\begin{table}[h]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}l Y c l@{}}
+\toprule
+Role & Variable & Freq. & Source \\
+\midrule
+Adoption (main) & log real UPI value per capita; log UPI count per capita & Q & PhonePe Pulse \\
+Adoption (alt.) & Registered users per 1{,}000 population & Q & PhonePe Pulse \\
+Adoption (valid.) & NPCI state volume and value & M & NPCI (from Apr 2025) \\
+FI index, quarterly & Bank offices per lakh; real deposits and credit per capita; CD ratio (PCA)
+  & Q & RBI BSR-7$^{a}$ \\
+FI index, annual & Above + deposit and credit accounts per 1{,}000 adults, ATMs per lakh,
+  PMJDY accounts per capita$^{b}$ (PCA; Sarma index as robustness) & A & RBI BSR-1/2, Handbook, PMJDY \\
+Growth & Growth of real NSDP per capita (2011-12 prices) & A & MoSPI / RBI Handbook \\
+Moderator (RQ4) & Internet subscribers per 100 population & Q/A & TRAI (circle $\to$ state) \\
+Controls & Urbanisation, literacy; state CPI as deflator & A/M & Census, MoSPI \\
+Denominator & Population by state and year & A$\to$Q & National Commission on Population projections \\
+\bottomrule
+\end{tabularx}
+\par\smallskip\raggedright\footnotesize
+$^{a}$ Quarterly availability of each indicator to be confirmed. $^{b}$ Only if historical values are found.
+\end{table}
+
+\paragraph{Rules.} All money values are real (deflated by state CPI). Population is linearly
+interpolated from annual to quarterly. One crosswalk file maps every source's state names to one
+\texttt{state\_id}.
+
+\section{Pipeline architecture}
+
+{\footnotesize
+\begin{verbatim}
+btp/
+  data/raw/<source>/      downloads, never edited; manifest.csv (URL, date, sha256)
+  data/interim/           one long table per source: state_id, period, variable, value
+  data/final/             panel_quarterly.csv, panel_annual.csv, validation_npci.csv,
+                          coverage_report.csv
+  src/py/                 state_crosswalk.csv, fetch_phonepe.py, parse_phonepe.py,
+                          fetch_<source>.py (one per source), build_panels.py
+  src/R/                  01_descriptives.R  02_fi_index.R  03_cd_unitroot.R
+                          04_fe_re.R  05_causality.R  06_pvar.R  07_growth.R
+                          08_robustness.R
+  output/tables/ (.tex)   output/figures/ (.pdf)
+  thesis/btp1/  thesis/btp1-slides/  thesis/btp2/  paper/
+  Makefile                make data | make analysis | make all
+\end{verbatim}
+}
+
+\paragraph{Unit contracts.} Each script does one job and communicates only through files with a fixed
+schema. A failed step stops the build.
+
+\paragraph{Checks (the test suite).} \texttt{build\_panels.py} fails if: a state name is not in the
+crosswalk; a (\texttt{state\_id}, \texttt{period}) pair occurs twice; a value is negative; a per-capita
+value is more than 10 times the cross-state median. Each build writes \texttt{coverage\_report.csv}
+(missing cells per variable and state).
+
+\paragraph{Reproducibility.} PhonePe data is pinned to one commit hash. Python dependencies in
+\texttt{requirements.txt}; R packages pinned with \texttt{renv}. The project is a git repository; large
+raw files go in \texttt{.gitignore} and the manifest records their origin.
+
+\section{Econometric sequence}
+
+\paragraph{Step 0: description and validation} (\texttt{01\_descriptives.R}). Trends and maps of
+adoption; $\sigma$-convergence (coefficient of variation over time) and $\beta$-convergence.
+Proxy validation: Pearson and Spearman correlation of PhonePe vs NPCI state shares and per-capita
+values, for each month April 2025 -- June 2026.
+
+\paragraph{Step 1: series properties} (\texttt{03\_cd\_unitroot.R}). Pesaran CD test
+(\texttt{plm::pcdtest}). If dependence is present, CIPS (\texttt{plm::cipstest}); if not, IPS.
+If series are I(1): Pedroni cointegration (\texttt{pco}); if cointegrated, long run by CCE-MG;
+if not, first differences. Quarterly models include quarter dummies and a COVID dummy (2020Q2--Q3).
+
+\paragraph{RQ1} (\texttt{04\_fe\_re.R}).
+\[
+FI_{it} = \alpha_i + \lambda_t + \beta\, Adopt_{i,t-1} + \gamma' X_{it} + \varepsilon_{it}
+\]
+Hausman test (\texttt{phtest}) for FE vs RE; Driscoll--Kraay standard errors (\texttt{vcovSCC});
+CCE-MG (\texttt{pmg}, \texttt{model = "cmg"}) as the check for slope heterogeneity and common shocks.
+
+\paragraph{RQ3} (\texttt{05\_causality.R}, \texttt{06\_pvar.R}). Dumitrescu--Hurlin test
+(\texttt{plm::pgrangertest}) in both directions, lags 1--4 by BIC, $\tilde{Z}$ statistic reported.
+Panel VAR by GMM (\texttt{panelvar::pvargmm}) on $[Adopt, FI, Internet]$ with forward orthogonal
+deviations; impulse responses with bootstrap bands, FEVD, stability condition, Hansen $J$.
+
+\paragraph{RQ4} (\texttt{04\_fe\_re.R}). Interaction $Adopt \times Internet$ (centred). Sample split at
+the 2018 median of internet penetration (pre-determined, so adoption cannot affect the split).
+
+\paragraph{RQ2} (\texttt{07\_growth.R}), annual tier.
+\[
+\Delta \ln NSDPpc_{it} = \alpha_i + \lambda_t + \beta\, Adopt_{i,t-1} + \rho \ln NSDPpc_{i,t-1}
+  + \gamma' X_{it} + \varepsilon_{it}
+\]
+FE with Driscoll--Kraay standard errors; system GMM (\texttt{pgmm}) with collapsed instruments,
+reporting instrument count, Hansen, and AR(2). The thesis states that $T \approx 7$ makes these
+results suggestive only.
+
+\paragraph{Robustness} (\texttt{08\_robustness.R}). Alternative adoption measures (count, users);
+Sarma FI index; samples (all 36; 20 major states); excluding 2020; north-eastern states separately.
+
+\paragraph{Wording rule.} Results are reported as predictive (Granger) causality, not as causal effects.
+
+\section{BTP-I scope (end-semester evaluation)}
+
+\paragraph{In scope.} Crosswalk, PhonePe fetch and parse, population, state CPI, NPCI validation data,
+\texttt{01\_descriptives.R}.
+\paragraph{Out of scope (BTP-II).} FI indices, Steps 1--3, RQ1--RQ4 estimation, robustness.
+
+\paragraph{BTP-I report} (\texttt{thesis/btp1/}): Ch.~1 Introduction (background, problem, RQs,
+hypotheses); Ch.~2 Literature review (finance--growth, FI--ICT including Pradhan et al., digital
+payments; gap); Ch.~3 Data (availability findings, PhonePe as proxy, variable table, sample);
+Ch.~4 Methodology (plan of Steps 0--3); Ch.~5 Preliminary results (trends, maps, convergence,
+PhonePe--NPCI validation); Ch.~6 BTP-II plan.
+\paragraph{BTP-I slides} (\texttt{thesis/btp1-slides/}): Beamer, 12--15 slides.
+
+\begin{table}[h]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}c Y Y@{}}
+\toprule
+Week & Pipeline & Writing \\
+\midrule
+1 & git init; crosswalk; PhonePe fetch and parse; population & Read core literature \\
+2 & CPI deflator; NPCI validation; descriptives and figures & Ch.~2 \\
+3 & Fix figures and tables & Ch.~1, 3, 4 \\
+4 & Freeze outputs & Ch.~5, 6; Beamer; draft to Prof.\ Pradhan \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{After BTP-I.} BTP-II (December -- April): FI data, indices, Steps 1--3, thesis.
+Paper (\texttt{elsarticle}) after the BTP-II results. District-panel extension checked after BTP-I.
+
+\section{Risks and fallbacks}
+
+\begin{table}[h]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}c Y Y Y@{}}
+\toprule
+\# & Risk & Detection & Fallback \\
+\midrule
+1 & Supervisor does not accept PhonePe proxy & Ask in week 1 & NPCI validation; else NPCI-only
+  cross-section FY25--FY26 \\
+2 & Weak PhonePe--NPCI correlation ($\rho < 0.8$) & Step 0 & Report as finding; PhonePe shares
+  $\times$ national UPI totals as scaled proxy \\
+3 & RBI FI indicators not quarterly & Coverage report & Quarterly index uses quarterly indicators only \\
+4 & No PMJDY history & PIB / Parliament answers search & Drop PMJDY; document \\
+5 & TRAI circles $\neq$ states & Crosswalk step & Split circles by population share, or Dataful /
+  IndiaStat state tables \\
+6 & NSDP gaps in recent years & Coverage report & Unbalanced panel; report $N$ per year \\
+7 & Unstable panel VAR or Hansen $J$ rejects & \texttt{06\_pvar.R} diagnostics & Change lags or
+  instruments; else report DH results only \\
+8 & PhonePe repo structure changes & Pinned commit & Parser reads pinned commit only \\
+9 & Unknown KGP BTP rules & Ask coordinator in week 1 & Adapt \LaTeX{} template \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Blocking items for week 1.} Risks 1 and 9.
+
+\section*{Key references}
+\begin{itemize}
+  \item Pradhan, R.P., Arvin, M.B., Nair, M., et al.\ (2021). \emph{Technological Forecasting and Social
+        Change}, 169, 120758. doi:10.1016/j.techfore.2021.120758.
+  \item Pradhan, R.P., Sahoo, P.P.\ (2021). \emph{Applied Economics Letters}, 28(4), 310--314.
+  \item Reddy, A., Kedia, M., Shukla, S. Diffusion of Digital Payments in India. ICRIER WP IPCIDE-wp1.
+  \item Dumitrescu, E.-I., Hurlin, C.\ (2012). \emph{Economic Modelling}, 29(4), 1450--1460.
+  \item Lopez, L., Weber, S.\ (2017). \emph{Stata Journal}, 17(4), 972--984.
+  \item Love, I., Zicchino, L.\ (2006). \emph{Quarterly Review of Economics and Finance}, 46(2), 190--210.
+  \item Abrigo, M.R.M., Love, I.\ (2016). \emph{Stata Journal}, 16(3), 778--804.
+\end{itemize}
+
+\end{document}
