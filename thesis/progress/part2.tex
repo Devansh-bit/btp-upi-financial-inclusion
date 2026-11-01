@@ -1,0 +1,159 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage[numbers]{natbib}
+\PassOptionsToPackage{hyphens}{url}
+\usepackage[hidelinks]{hyperref}
+\urlstyle{tt}
+
+\title{BTP Progress Report --- Part 2}
+\author{Devansh Gupta}
+\date{1 November 2026}
+
+\begin{document}
+\maketitle
+
+\section{Scope of Part 2}
+Part 2 covers Tasks 4 to 7 of the implementation plan. Task 4 is the state CPI deflator. Task 5 is the quarterly panel. Task 6 is the validation against NPCI data. Task 7 is the state boundaries.
+Part 2 builds on the Git tag \texttt{part1}.
+The design specification is \path{docs/superpowers/specs/2026-11-01-upi-financial-inclusion-design.tex}.
+
+\section{Data acquired}
+\paragraph{MoSPI state CPI.}
+The source is the eSankhyiki API of MoSPI \citep{mospi_cpi}. The file is \path{data/raw/cpi/mospi_cpi_state_general_combined.json}. The retrieval date is 1 November 2026. The series is the General index, Combined sector.
+% Command: .venv/bin/python -c "import json; d=json.load(open('data/raw/cpi/mospi_cpi_state_general_combined.json'))['data']; print({b:len(v['rows']) for b,v in d.items()})"   (output: base2012 3921, base2024 777)
+Base 2012 covers 2017 to 2025 and has 3921 rows. Base 2024 covers January 2025 to September 2026 and has 777 rows. Each base has 37 units.
+The months April and May 2020 are not published for any state in base 2012. The state codes differ between the two bases. The code maps the states by name.
+
+\paragraph{NPCI state-wise UPI data.}
+The source is the NPCI ecosystem statistics API \citep{npci_upi_state}. The file is \path{data/raw/npci/npci_statewise_2025-04_2026-09.json}.
+% Command: .venv/bin/python -c "import json; print(len(json.load(open('data/raw/npci/npci_statewise_2025-04_2026-09.json'))['months']))"   (output: 18)
+The file has 18 months, April 2025 to September 2026. The units are million transactions (volume) and Rs. crore (value).
+The months April 2025 to February 2026 have one row per state (37 rows with the unclassified row). From March 2026, NPCI publishes district rows and one total row for each state (817 rows per month, from the manifest). The format change is in March 2026.
+
+\paragraph{State boundaries.}
+The source is the geoBoundaries gbOpen release \texttt{9469f09} for India, level ADM1 \citep{geoboundaries_ind_adm1,geoboundaries_ind_adm1_data}. The licence is CC BY 2.5 IN.
+% Command: .venv/bin/python -c "import json; g=json.load(open('data/interim/india_states.geojson')); ids=[f['properties']['state_id'] for f in g['features']]; print(len(ids), len(set(ids)))"   (output: 36 35)
+The file has 36 features. The features have 35 distinct \path{state_id} values. Two features map to the id \path{jammu_kashmir} (see Section~\ref{sec:decisions}).
+
+\section{Processing decisions}\label{sec:decisions}
+\paragraph{CPI base linking.}
+MoSPI publishes no state linking factor between base 2012 and base 2024. The code uses the 2025 overlap, where both bases have 12 months. The factor for state $s$ is
+\[
+f_s = \frac{\overline{I^{2012}_{s,2025}}}{\overline{I^{2024}_{s,2025}}}.
+\]
+The linked index is the base 2012 value until December 2025. From January 2026 it is the base 2024 value multiplied by $f_s$.
+% Command: PYTHONPATH=src/py .venv/bin/python -c "import pandas as pd; from btpdata import cpi; f=cpi.overlap_factors(cpi.read_raw(cpi.RAW)); f.pop('all_india'); s=pd.Series(f); print(len(s), s.min(), s.idxmin(), s.median(), s.max(), s.idxmax()); print(s[(s<1.7)|(s>2.1)])"
+%   (output: 34 1.6997 delhi 1.8910 2.1218 manipur; outside 1.7-2.1: delhi 1.6997, manipur 2.1218)
+The code computes 34 state factors. The minimum is 1.700 (Delhi). The median is 1.891. The maximum is 2.122 (Manipur). Two states are outside the range 1.7 to 2.1: Delhi (1.6997) and Manipur (2.1218).
+% Command: same call; print(cpi.overlap_factors(cpi.read_raw(cpi.RAW))['all_india'])   (output: 1.8985)
+The factor for the all-India series is 1.899.
+
+\paragraph{Gap fill.}
+The code fills gaps of up to 3 months by log-linear interpolation. The gaps are in 2020Q2.
+% Command: .venv/bin/python -c "import pandas as pd; c=pd.read_csv('data/interim/cpi.csv'); w=c.pivot(index=['state_id','period'],columns='variable',values='value').reset_index(); g=w[w.cpi_interpolated_months>0]; print(g.groupby('period').size().to_dict(), g.cpi_interpolated_months.value_counts().to_dict())"
+%   (output: {'2020Q2': 34}; {2.0: 31, 3.0: 3})
+In 2020Q2, 34 states have interpolated months. Of these, 31 states have 2 months (April and May 2020). Three states have 3 months (Manipur, Nagaland and Puducherry).
+
+\paragraph{Arunachal Pradesh.}
+The own base-2012 series of Arunachal Pradesh is mostly empty. The code uses the all-India series for this state. The column \path{cpi_fallback} is 1 for this state.
+% Command: .venv/bin/python -c "import pandas as pd; c=pd.read_csv('data/interim/cpi.csv'); w=c.pivot(index=['state_id','period'],columns='variable',values='value').reset_index(); print(w[w.cpi_fallback==1].state_id.unique())"   (output: ['arunachal_pradesh'])
+It is the only state with \path{cpi_fallback} equal to 1.
+
+\paragraph{Merged ids.}
+The crosswalk maps Ladakh to \path{jammu_kashmir}. It maps Dadra and Nagar Haveli and Daman and Diu to \path{dnh_dd}.
+For the CPI, base 2024 lists Dadra and Nagar Haveli and Daman and Diu as one unit. Base 2012 lists them as two units. The code keeps the component with the larger NCP 2018 population for base 2012.
+
+\paragraph{Per-capita and real values.}
+The panel uses these formulas. $C$ is the PhonePe transaction count. $A$ is the PhonePe amount in rupees. $U$ is the number of registered users. $P$ is the population. $\mathrm{CPI}$ is the linked index on base 2012 $=100$.
+\begin{align*}
+\mathrm{count\_pc} &= C / P, &
+\mathrm{real\_amount\_pc} &= \frac{100\,A}{\mathrm{CPI}\cdot P}, \\
+\mathrm{users\_per\_1000} &= \frac{1000\,U}{P}, &
+\mathrm{ln\_count\_pc} &= \ln(\mathrm{count\_pc}), \\
+\mathrm{ln\_real\_amount\_pc} &= \ln(\mathrm{real\_amount\_pc}). & &
+\end{align*}
+The quarterly CPI is the mean of the three monthly values. It is missing if one month is missing.
+
+\paragraph{Outlier rule.}
+A per-capita value fails the check if it is more than 10 times the median of its period (across the 35 ids). The panel build stops on a failure.
+% Command: .venv/bin/python -c "import pandas as pd; p=pd.read_csv('data/final/panel_quarterly.csv'); [print(c, (p[c]/p.groupby('period')[c].transform('median')).max()) for c in ['count_pc','real_amount_pc','users_per_1000']]"
+%   (output: count_pc 7.807 (telangana 2021Q1); real_amount_pc 7.519 (telangana 2021Q2); users_per_1000 3.363 (delhi 2019Q1))
+The largest ratios to the period median are 7.81 for \path{count_pc} (Telangana, 2021Q1), 7.52 for \path{real_amount_pc} (Telangana, 2021Q2) and 3.36 for \path{users_per_1000} (Delhi, 2019Q1). No value fails.
+
+\section{Results}
+\subsection{Panel}
+% Command: .venv/bin/python -c "import pandas as pd; p=pd.read_csv('data/final/panel_quarterly.csv'); print(len(p), p.state_id.nunique(), p.period.nunique(), p.period.min(), p.period.max(), p.groupby('state_id').in_main_sample.first().sum()); c=pd.read_csv('data/final/coverage_report.csv'); print(len(c), c.variable.nunique(), c.n_missing.sum())"
+%   (output: 1190 35 34 2018Q1 2026Q2 30; 455 13 0)
+The file \path{data/final/panel_quarterly.csv} has 1190 rows. It has 35 state ids and 34 quarters, 2018Q1 to 2026Q2. The main sample has 30 ids.
+The file \path{data/final/coverage_report.csv} has 455 rows (13 variables, 35 ids). The total of \path{n_missing} is 0.
+
+\subsection{Validation against NPCI}
+The check compares PhonePe with NPCI for the 35 ids in each quarter where both exist. The quarters are 2025Q2 to 2026Q2 (5 quarters). The measures are the state share of the national total (\path{share_count}, \path{share_value}) and the per-capita level (\path{count_pc}, \path{value_pc}). The Spearman coefficient is the Pearson coefficient of the average ranks.
+% Command: .venv/bin/python -c "import pandas as pd; v=pd.read_csv('data/final/validation_npci.csv'); print(v.round(3).to_string())"   (all values in Tables 1 and 2; n_states = 35 in every row)
+\begin{table}[h]
+\centering
+\caption{PhonePe against NPCI: state shares (35 ids).}
+\begin{tabular}{lrrrr}
+\toprule
+ & \multicolumn{2}{c}{Share of transactions} & \multicolumn{2}{c}{Share of value} \\
+Quarter & Pearson & Spearman & Pearson & Spearman \\
+\midrule
+2025Q2 & 0.923 & 0.967 & 0.923 & 0.961 \\
+2025Q3 & 0.905 & 0.958 & 0.898 & 0.959 \\
+2025Q4 & 0.897 & 0.954 & 0.897 & 0.955 \\
+2026Q1 & 0.901 & 0.953 & 0.897 & 0.956 \\
+2026Q2 & 0.901 & 0.956 & 0.897 & 0.954 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{table}[h]
+\centering
+\caption{PhonePe against NPCI: per-capita levels (35 ids).}
+\begin{tabular}{lrrrr}
+\toprule
+ & \multicolumn{2}{c}{Transactions per person} & \multicolumn{2}{c}{Value per person} \\
+Quarter & Pearson & Spearman & Pearson & Spearman \\
+\midrule
+2025Q2 & 0.708 & 0.605 & 0.742 & 0.583 \\
+2025Q3 & 0.633 & 0.468 & 0.674 & 0.495 \\
+2025Q4 & 0.616 & 0.455 & 0.647 & 0.480 \\
+2026Q1 & 0.619 & 0.478 & 0.653 & 0.496 \\
+2026Q2 & 0.615 & 0.467 & 0.664 & 0.506 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{NPCI unattributed share}\label{sec:unattr}
+% Command: .venv/bin/python -c "import pandas as pd; u=pd.read_csv('data/final/npci_unattributed.csv'); print(len(u), u.volume_share.min(), u.volume_share.max(), u.value_share.min(), u.value_share.max()); print(u.head(3).round(3).to_string()); print(u[u.month>='2025-06'][['volume_share','value_share']].agg(['min','max']).round(3))"
+%   (output: 18 months; volume 0.2232 to 0.4474; value 0.1988 to 0.4170; 2025-04 0.275/0.257; 2025-05 0.223/0.199; 2025-06 0.447/0.417; from 2025-06 volume 0.422 to 0.447, value 0.379 to 0.417)
+The file \path{data/final/npci_unattributed.csv} has 18 months, April 2025 to September 2026. It gives the share of the NPCI national total that has the state ``unclassified''.
+The volume share is between 0.223 (May 2025) and 0.447 (June 2025). The value share is between 0.199 (May 2025) and 0.417 (June 2025).
+The level changes in June 2025. The volume share is 0.275 in April 2025 and 0.223 in May 2025. It is 0.447 in June 2025. From June 2025 to September 2026 it is between 0.422 and 0.447. The value share is 0.257 in April 2025 and 0.199 in May 2025. From June 2025 it is between 0.379 and 0.417.
+
+\subsection{Validation result}
+The share correlations are between 0.897 and 0.923 (Pearson) and between 0.953 and 0.967 (Spearman). The per-capita correlations are between 0.615 and 0.742 (Pearson) and between 0.455 and 0.606 (Spearman).
+% Command: .venv/bin/python -c "import pandas as pd; v=pd.read_csv('data/final/validation_npci.csv'); print(v.groupby('measure')[['pearson','spearman']].agg(['min','max']).round(3))"
+%   (output: share_count P 0.897-0.923, S 0.953-0.967; share_value P 0.897-0.923, S 0.954-0.961; count_pc P 0.615-0.708, S 0.455-0.605; value_pc P 0.647-0.742, S 0.480-0.583)
+The Pearson coefficient for \path{share_count} falls from 0.923 in 2025Q2 to 0.897 in 2025Q4. It is 0.901 in 2026Q1 and in 2026Q2. The per-capita coefficients are lower than the share coefficients in every quarter. The share measures divide each state value by the sum over the 35 ids. The unclassified NPCI volume (0.42 to 0.45 of the national total from June 2025) is not part of that sum.
+
+\section{Open items}
+\begin{itemize}
+\item Task 0: supervisor approval of the PhonePe proxy. Department rules for the report format.
+\item The NPCI overlap with PhonePe is 5 quarters. The coefficients cannot test the PhonePe series before 2025Q2.
+\item The NPCI unclassified share changes level in June 2025 (Section~\ref{sec:unattr}). The cause is not known. The share-based and per-capita coefficients depend on how NPCI assigns the unclassified part.
+\item The deflator for Arunachal Pradesh is the all-India series. The state has no own series.
+\item The linking factors have no official source. Delhi (1.6997) and Manipur (2.1218) are outside the range 1.7 to 2.1.
+\end{itemize}
+
+\section{Next}
+Part 3 covers Tasks 8 to 11: R descriptives, the Makefile, the report Chapters 3 to 6 and the slides.
+
+\bibliographystyle{plainnat}
+\bibliography{../../references/refs}
+\end{document}
