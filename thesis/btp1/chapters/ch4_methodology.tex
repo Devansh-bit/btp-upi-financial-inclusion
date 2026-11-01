@@ -1,0 +1,36 @@
+% Chapter outline. Equations: eq:fe (RQ1), eq:growth (RQ2). Source: spec Section 5 "Econometric sequence".
+% Steps 1--3 (series properties, RQ1/RQ3/RQ4, RQ2) are BTP-II work. BTP-I covers Step 0 only. Say so in the text.
+\chapter{Methodology}\label{ch:methods}
+
+\section{Step 0: description and validation}
+% Student writes: trends and maps; sigma-convergence (coefficient of variation over time); beta-convergence; PhonePe vs NPCI correlation (script 01_descriptives.R).
+% Results are in Chapter~\ref{ch:results}.
+
+\section{Step 1: series properties (BTP-II)}
+% Student writes: Pesaran CD test (plm::pcdtest). If dependence: CIPS (plm::cipstest); else IPS. If I(1): Pedroni cointegration; if cointegrated, CCE-MG long run; else first differences. Quarter dummies and COVID dummy (2020Q2--Q3). Script 03_cd_unitroot.R.
+% Read: lopez2017
+
+\section{RQ1: adoption and financial inclusion (BTP-II)}
+% Student writes: define the terms in Equation~\ref{eq:fe}; Hausman test (phtest); Driscoll--Kraay standard errors (vcovSCC); CCE-MG (pmg, model = "cmg"). Script 04_fe_re.R.
+\begin{equation}
+FI_{it} = \alpha_i + \lambda_t + \beta\, Adopt_{i,t-1} + \gamma' X_{it} + \varepsilon_{it}
+\label{eq:fe}
+\end{equation}
+
+\section{RQ3: causality (BTP-II)}
+% Student writes: Dumitrescu--Hurlin test (plm::pgrangertest), both directions, lags 1--4 by BIC, Z-tilde statistic; panel VAR by GMM (panelvar::pvargmm) on [Adopt, FI, Internet], forward orthogonal deviations, bootstrap impulse responses, FEVD, stability, Hansen J. Scripts 05_causality.R, 06_pvar.R.
+% Read: dumitrescu2012, love2006, abrigo2016
+% Wording rule: results are predictive (Granger) causality, not causal effects.
+
+\section{RQ4: internet moderation (BTP-II)}
+% Student writes: interaction Adopt x Internet (centred); sample split at the 2018 median of internet penetration. Script 04_fe_re.R.
+
+\section{RQ2: adoption and growth (BTP-II)}
+% Student writes: define the terms in Equation~\ref{eq:growth}; annual tier; FE with Driscoll--Kraay errors; system GMM (pgmm) with collapsed instruments (report instrument count, Hansen, AR(2)); T about 7, so results are suggestive only. Script 07_growth.R.
+\begin{equation}
+\Delta \ln NSDPpc_{it} = \alpha_i + \lambda_t + \beta\, Adopt_{i,t-1} + \rho \ln NSDPpc_{i,t-1} + \gamma' X_{it} + \varepsilon_{it}
+\label{eq:growth}
+\end{equation}
+
+\section{Robustness (BTP-II)}
+% Student writes: alternative adoption measures (count, users); Sarma FI index; samples (35 units; 20 major states of pradhan2021tfsc); excluding 2020; north-eastern states separately. Script 08_robustness.R.

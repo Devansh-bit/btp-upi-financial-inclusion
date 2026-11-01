@@ -1,0 +1,54 @@
+% Chapter outline. Floats: fig:trend, fig:maps (subfigures fig:map2018, fig:map2026), fig:sigma, tab:beta.
+\chapter{Preliminary results}\label{ch:results}
+
+\section{Adoption trends}
+% Student writes: describe Figure~\ref{fig:trend} (median and interquartile range across states; growth phases; COVID quarter 2020Q2).
+% Files: output/figures/adoption_trend_main.pdf (script src/R/01_descriptives.R)
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.9\textwidth]{adoption_trend_main.pdf}
+\caption{UPI adoption: median and interquartile range across states of real value per person per quarter (Rs., 2012 prices), 2018Q1--2026Q2, main sample (30 states). Data: PhonePe Pulse; MoSPI state CPI; NCP 2020 population projections.}
+\label{fig:trend}
+\end{figure}
+
+\section{Regional pattern}
+% Student writes: compare Figure~\ref{fig:map2018} (2018Q4) and Figure~\ref{fig:map2026} (2026Q2); which states lead and lag; change in the spread. Both are in Figure~\ref{fig:maps}.
+% Files: output/figures/adoption_map_2018Q4.pdf, adoption_map_2026Q2.pdf
+\begin{figure}[tbp]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{adoption_map_2018Q4.pdf}
+\caption{2018Q4}
+\label{fig:map2018}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{adoption_map_2026Q2.pdf}
+\caption{2026Q2}
+\label{fig:map2026}
+\end{subfigure}
+\caption{UPI adoption by state: real value per person (Rs., 2012 prices), 2018Q4 and 2026Q2. Data: PhonePe Pulse; MoSPI state CPI; NCP 2020 population projections; geoBoundaries gbOpen ADM1 (state boundaries).}
+\label{fig:maps}
+\end{figure}
+
+\section{Convergence}
+% Student writes: sigma-convergence in Figure~\ref{fig:sigma} (dispersion over time); beta-convergence in Table~\ref{tab:beta} (slope on initial level; N = 30; R-squared; interpret signs and sizes; do not claim convergence if the slope is insignificant).
+% Files: output/figures/sigma_convergence.pdf; output/tables/beta_convergence.tex
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.9\textwidth]{sigma_convergence.pdf}
+\caption{Sigma-convergence of UPI adoption: coefficient of variation across states over time for transactions per person, real value per person and registered users per 1,000, 2018Q1--2026Q2, main sample (30 states). Data: PhonePe Pulse; MoSPI state CPI; NCP 2020 population projections.}
+\label{fig:sigma}
+\end{figure}
+
+\begin{table}[tbp]
+\centering\small
+% Data: output/tables/beta_convergence.tex (tabularray tblr; standard errors in parentheses)
+\input{../../output/tables/beta_convergence.tex}
+\caption{Beta-convergence of UPI adoption, main sample (30 states). Columns: real value per person and transactions per person. Standard errors in parentheses. Data: PhonePe Pulse; MoSPI state CPI; NCP 2020 population projections.}
+\label{tab:beta}
+\end{table}
+
+\section{Proxy validation}
+% Student writes: summarise Table~\ref{tab:validation} (Chapter~\ref{ch:data}); state what the coefficients mean for using PhonePe as the adoption proxy.

@@ -5,6 +5,11 @@
 \usepackage{microtype}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{tabularray}
+\UseTblrLibrary{booktabs}
+\usepackage{xcolor}
+\usepackage{subcaption}
 \usepackage{amsmath}
 \usepackage[numbers]{natbib}
 \usepackage{ifthen}
@@ -53,8 +58,12 @@
 \listoftables
 
 \clearpage\pagenumbering{arabic}
-\include{chapters/ch1_intro}% ch3_data, ch4_methods, ch5_results, ch6_conclusion come in Part 3
-\include{chapters/ch2_literature}% later chapters are added in Part 3
+\include{chapters/ch1_intro}
+\include{chapters/ch2_literature}
+\include{chapters/ch3_data}
+\include{chapters/ch4_methodology}
+\include{chapters/ch5_results}
+\include{chapters/ch6_plan}
 
 \bibliographystyle{plainnat}
 \bibliography{../../references/refs}

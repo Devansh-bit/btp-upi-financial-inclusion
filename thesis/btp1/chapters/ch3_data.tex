@@ -1,0 +1,65 @@
+% Chapter outline. Floats: tab:variables, tab:summary, tab:validation (each referenced below).
+\chapter{Data}\label{ch:data}
+
+\section{Data availability}
+% Student writes: which sources exist at state level and frequency; what is missing (district GDP, quarterly FI indicators).
+% Read: spec Section 3; docs/superpowers/specs/2026-11-01-upi-financial-inclusion-design.tex; refs: rbi_fiindex2025, pmjdy_statewise, dataful2026upi, medianama2025npci
+% Source files: data/raw/manifest (origin of each raw file); thesis/progress/part1.tex, part2.tex
+
+\section{Adoption proxy (PhonePe Pulse)}
+% Student writes: what PhonePe Pulse reports (transactions, amount, registered users; quarterly, state level); coverage limit of one app; pinned commit.
+% Read: phonepe_pulse (refs.bib); data/final/panel_quarterly.csv
+
+\section{Validation against NPCI}
+% Student writes: NPCI state data (monthly, from April 2025) summed to quarters; Pearson and Spearman of shares, 2025Q2--2026Q2; discuss the values in Table~\ref{tab:validation}.
+% Read: npci_upi_state, medianama2025npci; data/final/validation_npci.csv; data/final/npci_unattributed.csv (unattributed volume)
+\begin{table}[tbp]
+\centering\small
+% Data: output/tables/validation_npci.tex (from data/final/validation_npci.csv; 35 units in each quarter)
+\input{../../output/tables/validation_npci.tex}
+\caption{Correlation between PhonePe Pulse and NPCI state data, by quarter, 2025Q2--2026Q2 (35 units per quarter; Pearson and Spearman coefficients of state shares of the national count and value). Data: PhonePe Pulse; NPCI UPI statistics.}
+\label{tab:validation}
+\end{table}
+
+\section{Variables and sample}
+% Student writes: each variable in Table~\ref{tab:variables}; main sample (30 units) and robustness samples; summary statistics in Table~\ref{tab:summary}.
+% Read: spec Section 3 (Sample and variables); data/final/panel_quarterly.csv (35 units x 34 quarters, 2018Q1--2026Q2; column in_main_sample = 30)
+\begin{table}[tbp]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}l >{\raggedright\arraybackslash}X c >{\raggedright\arraybackslash}X@{}}
+\toprule
+Role & Variable & Freq. & Source \\
+\midrule
+Adoption (main) & log real UPI value per capita; log UPI count per capita & Q & PhonePe Pulse \\
+Adoption (alt.) & Registered users per 1,000 population & Q & PhonePe Pulse \\
+Adoption (valid.) & NPCI state volume and value & M & NPCI (from Apr 2025) \\
+FI index, quarterly & Bank offices per lakh; real deposits and credit per capita; CD ratio (PCA) & Q & RBI BSR-7$^{a}$ \\
+FI index, annual & Above + deposit and credit accounts per 1,000 adults, ATMs per lakh, PMJDY accounts per capita$^{b}$ (PCA; Sarma index as robustness) & A & RBI BSR-1/2, Handbook, PMJDY \\
+Growth & Growth of real NSDP per capita (2011-12 prices) & A & MoSPI / RBI Handbook \\
+Moderator (RQ4) & Internet subscribers per 100 population & Q/A & TRAI (circle $\to$ state) \\
+Controls & Urbanisation, literacy; state CPI as deflator & A/M & Census, MoSPI \\
+Denominator & Population by state and year & A$\to$Q & National Commission on Population projections \\
+\bottomrule
+\end{tabularx}
+\par\smallskip\raggedright\footnotesize
+$^{a}$ Quarterly availability of each indicator to be confirmed. $^{b}$ Only if historical values are found.
+\caption{Variables, frequency (Q quarterly, M monthly, A annual) and sources.}
+\label{tab:variables}
+\end{table}
+
+\begin{table}[tbp]
+\centering\small
+% Data: output/tables/summary_stats.tex (main sample, 30 units x 34 quarters = 1,020 observations)
+\input{../../output/tables/summary_stats.tex}
+\caption{Summary statistics, main sample (30 states), 2018Q1--2026Q2. Data: PhonePe Pulse; MoSPI state CPI (linked, base 2012 $=100$); NCP 2020 population projections.}
+\label{tab:summary}
+\end{table}
+
+\section{Deflator and population}
+% Student writes: state CPI (MoSPI, General, Combined); linking of base 2012 and base 2024 by the 2025 overlap factor; gap fill (up to 3 months, log-linear, 2020Q2); Arunachal Pradesh fallback to all-India CPI (cpi_fallback = 1); population interpolation from annual NCP projections.
+% Use the numbers and formulas in thesis/progress/part2.tex (sections "CPI base linking", "Gap fill", "Arunachal Pradesh", "Per-capita and real values").
+% Read: mospi_cpi, ncp2020
+
+\section{Data quality}
+% Student writes: coverage summary (35 units x 13 variables, no missing cells); outlier rule (10 times period median); merged ids (Ladakh in J\&K; DNH and DD).
+% Files: data/final/coverage_report.csv; thesis/progress/part2.tex (section "Outlier rule", "Merged ids")

@@ -1,0 +1,34 @@
+% Chapter outline. Float: tab:risks. Source: spec Section 6 "After BTP-I" and Section 7 "Risks and fallbacks".
+\chapter{Plan for BTP-II}
+
+\section{FI data and indices}
+% Student writes: collect RBI BSR, PMJDY, TRAI and NSDP data; build quarterly and annual FI indices (PCA; Sarma index as robustness). BTP-II, December to April.
+
+\section{Econometric analysis}
+% Student writes: Steps 1--3 of Chapter~\ref{ch:methods}: series properties, RQ1, RQ3, RQ4, RQ2, robustness.
+
+\section{Thesis and paper}
+% Student writes: thesis chapters; paper (elsarticle) after the BTP-II results; district-panel extension checked after BTP-I.
+
+\section{Risks and fallbacks}
+% Student writes: discuss the risks in Table~\ref{tab:risks}; blocking items for week 1 are risks 1 and 9.
+\begin{table}[tbp]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}c >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X@{}}
+\toprule
+\# & Risk & Detection & Fallback \\
+\midrule
+1 & Supervisor does not accept PhonePe proxy & Ask in week 1 & NPCI validation; else NPCI-only cross-section FY25--FY26 \\
+2 & Weak PhonePe--NPCI correlation ($\rho < 0.8$) & Step 0 & Report as finding; PhonePe shares $\times$ national UPI totals as scaled proxy \\
+3 & RBI FI indicators not quarterly & Coverage report & Quarterly index uses quarterly indicators only \\
+4 & No PMJDY history & PIB / Parliament answers search & Drop PMJDY; document \\
+5 & TRAI circles $\neq$ states & Crosswalk step & Split circles by population share, or Dataful / IndiaStat state tables \\
+6 & NSDP gaps in recent years & Coverage report & Unbalanced panel; report $N$ per year \\
+7 & Unstable panel VAR or Hansen $J$ rejects & \texttt{06\_pvar.R} diagnostics & Change lags or instruments; else report DH results only \\
+8 & PhonePe repo structure changes & Pinned commit & Parser reads pinned commit only \\
+9 & Unknown KGP BTP rules & Ask coordinator in week 1 & Adapt \LaTeX{} template \\
+\bottomrule
+\end{tabularx}
+\caption{Risks, detection and fallbacks for the project.}
+\label{tab:risks}
+\end{table}
