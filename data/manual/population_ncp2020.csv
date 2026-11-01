@@ -1,0 +1,381 @@
+raw_name,year,population_thousands
+india,2018,1318678
+jammu & kashmir,2018,13101
+himachal pradesh,2018,7253
+india,2019,1332900
+jammu & kashmir,2019,13203
+himachal pradesh,2019,7300
+india,2020,1347121
+jammu & kashmir,2020,13305
+himachal pradesh,2020,7347
+india,2021,1361343
+jammu & kashmir,2021,13408
+himachal pradesh,2021,7394
+india,2022,1373761
+jammu & kashmir,2022,13505
+himachal pradesh,2022,7431
+india,2023,1386180
+jammu & kashmir,2023,13603
+himachal pradesh,2023,7468
+india,2024,1398598
+jammu & kashmir,2024,13701
+himachal pradesh,2024,7505
+india,2025,1411016
+jammu & kashmir,2025,13798
+himachal pradesh,2025,7542
+india,2026,1423435
+jammu & kashmir,2026,13896
+himachal pradesh,2026,7579
+india,2027,1433852
+jammu & kashmir,2027,13989
+himachal pradesh,2027,7606
+punjab,2018,29619
+haryana,2018,28266
+nct of delhi,2018,19435
+punjab,2019,29859
+haryana,2019,28672
+nct of delhi,2019,19814
+punjab,2020,30099
+haryana,2020,29077
+nct of delhi,2020,20193
+punjab,2021,30339
+haryana,2021,29483
+nct of delhi,2021,20571
+punjab,2022,30535
+haryana,2022,29846
+nct of delhi,2022,20965
+punjab,2023,30730
+haryana,2023,30209
+nct of delhi,2023,21359
+punjab,2024,30926
+haryana,2024,30573
+nct of delhi,2024,21752
+punjab,2025,31122
+haryana,2025,30936
+nct of delhi,2025,22146
+punjab,2026,31318
+haryana,2026,31299
+nct of delhi,2026,22540
+punjab,2027,31472
+haryana,2027,31629
+nct of delhi,2027,22942
+rajasthan,2018,76256
+uttar pradesh,2018,222015
+bihar,2018,117739
+rajasthan,2019,77264
+uttar pradesh,2019,224979
+bihar,2019,119520
+rajasthan,2020,78273
+uttar pradesh,2020,227943
+bihar,2020,121302
+rajasthan,2021,79281
+uttar pradesh,2021,230907
+bihar,2021,123083
+rajasthan,2022,80153
+uttar pradesh,2022,233297
+bihar,2022,124919
+rajasthan,2023,81025
+uttar pradesh,2023,235687
+bihar,2023,126756
+rajasthan,2024,81897
+uttar pradesh,2024,238078
+bihar,2024,128592
+rajasthan,2025,82770
+uttar pradesh,2025,240468
+bihar,2025,130429
+rajasthan,2026,83642
+uttar pradesh,2026,242859
+bihar,2026,132265
+rajasthan,2027,84353
+uttar pradesh,2027,244680
+bihar,2027,134020
+assam,2018,33918
+west bengal,2018,96297
+jharkhand,2018,36869
+assam,2019,34293
+west bengal,2019,96906
+jharkhand,2019,37403
+assam,2020,34668
+west bengal,2020,97516
+jharkhand,2020,37937
+assam,2021,35043
+west bengal,2021,98125
+jharkhand,2021,38471
+assam,2022,35378
+west bengal,2022,98604
+jharkhand,2022,38969
+assam,2023,35713
+west bengal,2023,99084
+jharkhand,2023,39466
+assam,2024,36047
+west bengal,2024,99563
+jharkhand,2024,39963
+assam,2025,36382
+west bengal,2025,100042
+jharkhand,2025,40461
+assam,2026,36717
+west bengal,2026,100522
+jharkhand,2026,40958
+assam,2027,37012
+west bengal,2027,100851
+jharkhand,2027,41408
+odisha,2018,43490
+chhattisgarh,2018,28340
+madhya pradesh,2018,81090
+odisha,2019,43671
+chhattisgarh,2019,28724
+madhya pradesh,2019,82232
+odisha,2020,43852
+chhattisgarh,2020,29109
+madhya pradesh,2020,83374
+odisha,2021,44033
+chhattisgarh,2021,29493
+madhya pradesh,2021,84516
+odisha,2022,44162
+chhattisgarh,2022,29836
+madhya pradesh,2022,85548
+odisha,2023,44291
+chhattisgarh,2023,30180
+madhya pradesh,2023,86579
+odisha,2024,44420
+chhattisgarh,2024,30524
+madhya pradesh,2024,87610
+odisha,2025,44548
+chhattisgarh,2025,30867
+madhya pradesh,2025,88641
+odisha,2026,44677
+chhattisgarh,2026,31211
+madhya pradesh,2026,89673
+odisha,2027,44743
+chhattisgarh,2027,31512
+madhya pradesh,2027,90549
+gujarat,2018,67010
+maharashtra,2018,121011
+andhra pradesh,2018,51938
+gujarat,2019,67936
+maharashtra,2019,122153
+andhra pradesh,2019,52221
+gujarat,2020,68862
+maharashtra,2020,123295
+andhra pradesh,2020,52504
+gujarat,2021,69788
+maharashtra,2021,124437
+andhra pradesh,2021,52787
+gujarat,2022,70648
+maharashtra,2022,125411
+andhra pradesh,2022,52972
+gujarat,2023,71507
+maharashtra,2023,126385
+andhra pradesh,2023,53156
+gujarat,2024,72367
+maharashtra,2024,127360
+andhra pradesh,2024,53340
+gujarat,2025,73227
+maharashtra,2025,128334
+andhra pradesh,2025,53524
+gujarat,2026,74086
+maharashtra,2026,129308
+andhra pradesh,2026,53709
+gujarat,2027,74855
+maharashtra,2027,130137
+andhra pradesh,2027,53802
+karnataka,2018,65275
+kerala,2018,34943
+tamil nadu,2018,75342
+karnataka,2019,65798
+kerala,2019,35125
+tamil nadu,2019,75695
+karnataka,2020,66322
+kerala,2020,35307
+tamil nadu,2020,76049
+karnataka,2021,66845
+kerala,2021,35489
+tamil nadu,2021,76402
+karnataka,2022,67268
+kerala,2022,35633
+tamil nadu,2022,76631
+karnataka,2023,67692
+kerala,2023,35776
+tamil nadu,2023,76860
+karnataka,2024,68115
+kerala,2024,35920
+tamil nadu,2024,77089
+karnataka,2025,68538
+kerala,2025,36063
+tamil nadu,2025,77317
+karnataka,2026,68962
+kerala,2026,36207
+tamil nadu,2026,77546
+karnataka,2027,69300
+kerala,2027,36304
+tamil nadu,2027,77653
+chandigarh,2018,1165
+uttarakhand,2018,11013
+sikkim,2018,657
+chandigarh,2019,1179
+uttarakhand,2019,11141
+sikkim,2019,664
+chandigarh,2020,1193
+uttarakhand,2020,11270
+sikkim,2020,670
+chandigarh,2021,1208
+uttarakhand,2021,11399
+sikkim,2021,677
+chandigarh,2022,1219
+uttarakhand,2022,11518
+sikkim,2022,683
+chandigarh,2023,1231
+uttarakhand,2023,11637
+sikkim,2023,689
+chandigarh,2024,1243
+uttarakhand,2024,11755
+sikkim,2024,695
+chandigarh,2025,1255
+uttarakhand,2025,11874
+sikkim,2025,702
+chandigarh,2026,1267
+uttarakhand,2026,11993
+sikkim,2026,708
+chandigarh,2027,1277
+uttarakhand,2027,12099
+sikkim,2027,714
+arunachal pradesh,2018,1489
+nagaland,2018,2129
+manipur,2018,3073
+arunachal pradesh,2019,1504
+nagaland,2019,2150
+manipur,2019,3103
+arunachal pradesh,2020,1519
+nagaland,2020,2171
+manipur,2020,3134
+arunachal pradesh,2021,1533
+nagaland,2021,2192
+manipur,2021,3165
+arunachal pradesh,2022,1548
+nagaland,2022,2213
+manipur,2022,3194
+arunachal pradesh,2023,1562
+nagaland,2023,2233
+manipur,2023,3223
+arunachal pradesh,2024,1576
+nagaland,2024,2253
+manipur,2024,3253
+arunachal pradesh,2025,1590
+nagaland,2025,2274
+manipur,2025,3282
+arunachal pradesh,2026,1604
+nagaland,2026,2294
+manipur,2026,3311
+arunachal pradesh,2027,1617
+nagaland,2027,2312
+manipur,2027,3338
+mizoram,2018,1181
+tripura,2018,3953
+meghalaya,2018,3192
+mizoram,2019,1192
+tripura,2019,3992
+meghalaya,2019,3224
+mizoram,2020,1204
+tripura,2020,4032
+meghalaya,2020,3256
+mizoram,2021,1216
+tripura,2021,4071
+meghalaya,2021,3288
+mizoram,2022,1227
+tripura,2022,4109
+meghalaya,2022,3318
+mizoram,2023,1238
+tripura,2023,4147
+meghalaya,2023,3349
+mizoram,2024,1250
+tripura,2024,4184
+meghalaya,2024,3379
+mizoram,2025,1261
+tripura,2025,4222
+meghalaya,2025,3410
+mizoram,2026,1272
+tripura,2026,4260
+meghalaya,2026,3440
+mizoram,2027,1282
+tripura,2027,4294
+meghalaya,2027,3468
+daman & diu,2018,385
+dadra & nagar haveli,2018,515
+goa,2018,1531
+daman & diu,2019,413
+dadra & nagar haveli,2019,546
+goa,2019,1540
+daman & diu,2020,441
+dadra & nagar haveli,2020,577
+goa,2020,1549
+daman & diu,2021,469
+dadra & nagar haveli,2021,608
+goa,2021,1559
+daman & diu,2022,516
+dadra & nagar haveli,2022,654
+goa,2022,1567
+daman & diu,2023,564
+dadra & nagar haveli,2023,699
+goa,2023,1575
+daman & diu,2024,611
+dadra & nagar haveli,2024,745
+goa,2024,1583
+daman & diu,2025,658
+dadra & nagar haveli,2025,790
+goa,2025,1591
+daman & diu,2026,705
+dadra & nagar haveli,2026,836
+goa,2026,1599
+daman & diu,2027,792
+dadra & nagar haveli,2027,904
+goa,2027,1606
+lakshadweep,2018,67
+puducherry,2018,1470
+andaman & nicobar islands,2018,395
+lakshadweep,2019,68
+puducherry,2019,1504
+andaman & nicobar islands,2019,397
+lakshadweep,2020,68
+puducherry,2020,1537
+andaman & nicobar islands,2020,399
+lakshadweep,2021,68
+puducherry,2021,1571
+andaman & nicobar islands,2021,400
+lakshadweep,2022,68
+puducherry,2022,1608
+andaman & nicobar islands,2022,402
+lakshadweep,2023,69
+puducherry,2023,1646
+andaman & nicobar islands,2023,403
+lakshadweep,2024,69
+puducherry,2024,1683
+andaman & nicobar islands,2024,404
+lakshadweep,2025,69
+puducherry,2025,1720
+andaman & nicobar islands,2025,405
+lakshadweep,2026,70
+puducherry,2026,1757
+andaman & nicobar islands,2026,406
+lakshadweep,2027,70
+puducherry,2027,1798
+andaman & nicobar islands,2027,407
+telangana,2018,36967
+ladakh,2018,291
+telangana,2019,37220
+ladakh,2019,293
+telangana,2020,37473
+ladakh,2020,295
+telangana,2021,37725
+ladakh,2021,297
+telangana,2022,37907
+ladakh,2022,299
+telangana,2023,38090
+ladakh,2023,300
+telangana,2024,38272
+ladakh,2024,302
+telangana,2025,38454
+ladakh,2025,304
+telangana,2026,38636
+ladakh,2026,305
+telangana,2027,38750
+ladakh,2027,306
