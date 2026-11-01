@@ -1,0 +1,9 @@
+[project]
+name = "btpdata"
+version = "0.1.0"
+description = "Data pipeline for the BTP on UPI adoption and financial inclusion across Indian states"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["src/py"]
+testpaths = ["tests/py"]
