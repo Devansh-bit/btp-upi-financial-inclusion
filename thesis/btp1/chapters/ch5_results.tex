@@ -7,7 +7,7 @@
 \begin{figure}[tbp]
 \centering
 \includegraphics[width=0.9\textwidth]{adoption_trend_main.pdf}
-\caption{UPI adoption: median and interquartile range across states of real value per person per quarter (Rs., 2012 prices), 2018Q1--2026Q2, main sample (30 states). Data: PhonePe Pulse; MoSPI state CPI; NCP 2020 population projections.}
+\caption{UPI adoption: median and interquartile range across states of the natural log of real value per person per quarter (Rs., 2012 prices), 2018Q1--2026Q2, main sample (30 units: 28 states, Delhi, Jammu and Kashmir). Data: PhonePe Pulse; MoSPI state CPI; NCP 2020 population projections.}
 \label{fig:trend}
 \end{figure}
 
@@ -28,7 +28,7 @@
 \caption{2026Q2}
 \label{fig:map2026}
 \end{subfigure}
-\caption{UPI adoption by state: real value per person (Rs., 2012 prices), 2018Q4 and 2026Q2. Data: PhonePe Pulse; MoSPI state CPI; NCP 2020 population projections; geoBoundaries gbOpen ADM1 (state boundaries).}
+\caption{UPI adoption by state: real value per person per quarter (Rs., 2012 prices), 2018Q4 and 2026Q2, main sample (30 units: 28 states, Delhi, Jammu and Kashmir); log colour scale, same scale in both panels. Data: PhonePe Pulse; MoSPI state CPI; NCP 2020 population projections; geoBoundaries gbOpen ADM1 (state boundaries).}
 \label{fig:maps}
 \end{figure}
 
@@ -38,15 +38,16 @@
 \begin{figure}[tbp]
 \centering
 \includegraphics[width=0.9\textwidth]{sigma_convergence.pdf}
-\caption{Sigma-convergence of UPI adoption: coefficient of variation across states over time for transactions per person, real value per person and registered users per 1,000, 2018Q1--2026Q2, main sample (30 states). Data: PhonePe Pulse; MoSPI state CPI; NCP 2020 population projections.}
+\caption{Sigma-convergence of UPI adoption: coefficient of variation across states over time for transactions per person, real value per person and registered users per 1,000, 2018Q1--2026Q2, main sample (30 units: 28 states, Delhi, Jammu and Kashmir). Data: PhonePe Pulse; MoSPI state CPI; NCP 2020 population projections.}
 \label{fig:sigma}
 \end{figure}
 
 \begin{table}[tbp]
 \centering\small
+% Source: src/R/lib/descriptives_fns.R beta_convergence; src/R/01_descriptives.R
 % Data: output/tables/beta_convergence.tex (tabularray tblr; standard errors in parentheses)
 \input{../../output/tables/beta_convergence.tex}
-\caption{Beta-convergence of UPI adoption, main sample (30 states). Columns: real value per person and transactions per person. Standard errors in parentheses. Data: PhonePe Pulse; MoSPI state CPI; NCP 2020 population projections.}
+\caption{Beta-convergence of UPI adoption, main sample (30 units: 28 states, Delhi, Jammu and Kashmir), N = 30, OLS. Dependent variable: annualised log growth from 2018Q4 to 2026Q2, $(\ln x_{2026Q2}-\ln x_{2018Q4})/7.5$; regressor: $\ln x_{2018Q4}$. Column 1: $x$ = real value per person (Rs., 2012 prices); column 2: $x$ = transactions per person. Standard errors in parentheses. Data: PhonePe Pulse; MoSPI state CPI; NCP 2020 population projections.}
 \label{tab:beta}
 \end{table}
 
