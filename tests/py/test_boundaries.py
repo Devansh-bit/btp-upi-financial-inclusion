@@ -34,3 +34,39 @@ def test_real_file():
     assert len(ids) == 36
     assert set(ids) == set(ALL_IDS)
     assert ids.count("jammu_kashmir") == 2
+
+
+def _manifest(dest, name, url, sha):
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / "manifest.csv").write_text(
+        f"file,url,retrieved,sha256,notes\n{name},{url},2026-11-01,{sha},test\n", encoding="utf-8")
+
+
+def test_fetch_downloads_and_verifies(tmp_path):
+    import hashlib
+    from btpdata.boundaries import FILENAME, fetch
+    src = tmp_path / "src.geojson"
+    src.write_bytes(b'{"type":"FeatureCollection","features":[]}')
+    dest = tmp_path / "dest"
+    _manifest(dest, FILENAME, src.as_uri(), hashlib.sha256(src.read_bytes()).hexdigest())
+    path = fetch(dest)
+    assert path == dest / FILENAME
+    assert path.read_bytes() == src.read_bytes()
+
+
+def test_fetch_sha_mismatch_raises(tmp_path):
+    from btpdata.boundaries import FILENAME, fetch
+    src = tmp_path / "src.geojson"
+    src.write_bytes(b"{}")
+    dest = tmp_path / "dest"
+    _manifest(dest, FILENAME, src.as_uri(), "0" * 64)
+    with pytest.raises(ValueError, match="sha256"):
+        fetch(dest)
+
+
+def test_fetch_skips_when_present(tmp_path):
+    from btpdata.boundaries import FILENAME, fetch
+    dest = tmp_path / "dest"
+    _manifest(dest, FILENAME, "file:///nonexistent", "0" * 64)
+    (dest / FILENAME).write_bytes(b"{}")
+    assert fetch(dest) == dest / FILENAME
