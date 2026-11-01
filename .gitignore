@@ -24,3 +24,7 @@ renv/library/
 
 # Local copies of papers and reports (copyrighted; catalogued in references/source-log.csv)
 references/pdfs/
+*.lof
+*.lot
+# Report PDF is built from source; progress reports commit their PDF
+thesis/btp1/main.pdf
