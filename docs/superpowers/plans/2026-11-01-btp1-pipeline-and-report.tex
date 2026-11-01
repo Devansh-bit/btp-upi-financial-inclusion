@@ -1,0 +1,472 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\makeatletter\renewcommand\verbatim@font{\footnotesize\ttfamily}\makeatother
+\sloppy
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\setlength{\emergencystretch}{3em}
+\setlist{nosep}
+\newlist{steps}{itemize}{1}
+\setlist[steps]{label=$\square$, leftmargin=1.5em, itemsep=2pt}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\f}[1]{\texttt{#1}}
+
+\title{BTP-I Implementation Plan\\[2pt]\large State UPI-adoption panel, descriptive results, report and slides}
+\date{1 November 2026}
+\begin{document}
+\maketitle
+
+\noindent\textbf{For agentic workers:} REQUIRED SUB-SKILL: use \f{superpowers:subagent-driven-development}
+(recommended) or \f{superpowers:executing-plans} to implement this plan task by task. Each step is a
+checkbox ($\square$); mark it done ($\blacksquare$) when complete.
+
+\paragraph{Goal.} Build the quarterly state panel of UPI adoption (PhonePe Pulse, 2018Q1--2026Q2), validate it
+against NPCI, produce the descriptive results, and set up the \LaTeX{} BTP-I report and Beamer slides.
+
+\paragraph{Architecture.} Python scripts turn each raw source into one long interim table; one build script
+merges them into \f{data/final/panel\_quarterly.csv} and stops on any failed check. R reads the final
+panel and writes PDF figures and \f{.tex} tables, which the report and slides include.
+
+\paragraph{Tech stack.} Python 3.12 (pandas, pytest) in \f{.venv}; R $\geq$ 4.3 with \f{renv}
+(data.table, ggplot2, sf, modelsummary, testthat); pdflatex + BibTeX + natbib via \f{latexmk}; GNU Make; git.
+
+\paragraph{Spec.} \f{docs/superpowers/specs/2026-11-01-upi-financial-inclusion-design.tex} (Sections 3--6).
+
+\paragraph{Scope.} This plan covers only the BTP-I scope (spec Section~6). The FI data, FI indices and
+Steps~1--3 (BTP-II) get a separate plan after the week-1 checks in Task~0. That plan cannot be exact until
+we know which RBI indicators are quarterly.
+
+\section*{Global constraints}
+\begin{itemize}
+\item PhonePe Pulse commit: \f{257bf38e3095020f9f516c4c72c10bdc348781b1} (branch \f{main}, 24 Sep 2026).
+\item Period: \f{2018Q1} to \f{2026Q2}, 34 quarters. Period strings: quarterly \f{YYYYQn}, monthly \f{YYYY-MM}.
+\item \f{state\_id}: lowercase ASCII snake case. Ladakh $\to$ \f{jammu\_kashmir}. Dadra \& Nagar Haveli and
+      Daman \& Diu $\to$ \f{dnh\_dd}. 35 ids in total.
+\item Main sample (30 ids): the 28 states + \f{delhi} + \f{jammu\_kashmir}. The other UTs are
+      \f{andaman\_nicobar}, \f{chandigarh}, \f{dnh\_dd}, \f{lakshadweep}, \f{puducherry}.
+\item Interim schema (every \f{data/interim/*.csv}): columns \f{state\_id,period,variable,value,source}, in this order.
+\item Additive variables (counts, amounts, users, population) are summed over merged ids. Non-additive variables
+      (CPI) take the value of the larger-population component.
+\item Money: PhonePe \f{amount} is in rupees. Real values are in 2012 rupees: $real = nominal \times 100 / CPI$.
+\item $\ln$ of a value $\le 0$ is \f{NaN}, never $-\infty$.
+\item Outlier rule: a per-capita value above $10\times$ the median of all states in the same period fails the build.
+      If real data trips this rule, stop and report it to the user. Do not change the threshold without approval.
+\item Raw files are never edited. Each \f{data/raw/<source>/manifest.csv} has columns \f{file,url,retrieved,sha256,notes}.
+\item Python modules run from the repo root as \f{PYTHONPATH=src/py .venv/bin/python -m btpdata.<module>}; each
+      data module has a \f{main()} called under \f{if \_\_name\_\_ == "\_\_main\_\_"}.
+\item All documents are \LaTeX{}. Citations use natbib + BibTeX (\f{plainnat}), not biblatex.
+\item The student writes the report prose. Tasks~10--11 create the structure, outline comments, bibliography,
+      figure and table includes. Agents do not write chapter prose unless the user asks.
+\end{itemize}
+
+\section*{Review focus}
+\begin{enumerate}
+\item State-name variants across sources (``Orissa'', ``Andaman And Nicobar Islands'', ``NCT of Delhi'', case and
+      spaces) map to one id, and an unknown name stops the build and names the string. Tested in Task~1.
+\item Merged ids: the per-capita value for \f{jammu\_kashmir} equals (J\&K + Ladakh sum) / (summed population), not
+      a mean of two per-capita values. Tested in Tasks~2, 3, 5.
+\item A zero or missing value (small UTs, early quarters) gives \f{NaN} logs and is counted in the coverage report;
+      it does not stop the build. Tested in Task~5.
+\item Population reference date: projections are as of 1 March, so the annual value is the Q1 value; 2026Q2
+      needs the 2027 value. No population cell is empty in 2018Q1--2026Q2. Tested in Task~3.
+\item A CPI base change inside the download (2012=100 to a newer base) is linked with the official factor, with
+      no jump at the switch. Tested in Task~4.
+\end{enumerate}
+
+\section*{File map}
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+File & Responsibility \\
+\midrule
+\f{pyproject.toml}, \f{requirements.txt} & pytest config (\f{pythonpath = ["src/py"]}), pinned deps \\
+\f{src/py/btpdata/states.py}, \f{state\_crosswalk.csv} & name $\to$ \f{state\_id}; sample lists \\
+\f{src/py/btpdata/periods.py} & period sequences \\
+\f{src/py/btpdata/fetch\_phonepe.py}, \f{parse\_phonepe.py} & pinned sparse clone; JSON $\to$ \f{interim/phonepe.csv} \\
+\f{src/py/btpdata/population.py} & \f{data/manual/population\_ncp2020.csv} $\to$ \f{interim/population.csv} \\
+\f{src/py/btpdata/cpi.py} & MoSPI state CPI $\to$ \f{interim/cpi.csv} \\
+\f{src/py/btpdata/npci.py}, \f{validation.py} & NPCI monthly $\to$ \f{interim/npci.csv}; \f{final/validation\_npci.csv} \\
+\f{src/py/btpdata/boundaries.py} & state boundary GeoJSON $\to$ \f{interim/india\_states.geojson} with \f{state\_id} \\
+\f{src/py/btpdata/build\_panels.py} & merge, derive, check $\to$ \f{final/panel\_quarterly.csv}, \f{coverage\_report.csv} \\
+\f{src/R/lib/descriptives\_fns.R}, \f{src/R/01\_descriptives.R} & functions; figures and tables \\
+\f{tests/py/}, \f{tests/R/} & tests and small fixtures \\
+\f{Makefile} & \f{make test | data | analysis | report | all} \\
+\f{thesis/btp1/}, \f{thesis/btp1-slides/} & report and slides \\
+\bottomrule
+\end{tabularx}
+
+\section*{Week mapping}
+Week~1: Tasks 0--3. Week~2: Tasks 4--8. Week~3: Task 9 and Task 10 (chapters 1--4). Week~4: Task 10
+(chapters 5--6) and Task 11.
+
+% =====================================================================
+\section{Task 0: Week-1 blocking checks (human)}
+\begin{steps}
+\item Email Prof.\ Pradhan: (a) PhonePe Pulse as the adoption proxy with NPCI validation (spec risk~1);
+      (b) the two-tier design. Record his answer.
+\item Get from the department BTP coordinator: the end-sem date, report format and page limit, template, and slide
+      time (spec risk~9). Record them.
+\item Install R and the system libraries for \f{sf}. The user runs:
+      \f{! sudo apt install r-base r-base-dev libudunits2-dev libgdal-dev libgeos-dev libproj-dev}.
+      Check: \f{Rscript -e 'cat(R.version.string)'} prints 4.3 or later.
+\item Write the answers to \f{docs/decisions.tex} (a dated list) and commit:
+      \f{git commit -m "docs: record week-1 decisions"}.
+\end{steps}
+If the professor rejects the proxy, stop and re-plan (spec risk~1 fallback).
+
+% =====================================================================
+\section{Task 1: Project scaffold and state crosswalk}
+\textbf{Files.} Create \f{pyproject.toml}, \f{requirements.txt} (\f{pandas==2.2.3}, \f{pytest==8.3.3}),
+\f{src/py/btpdata/\_\_init\_\_.py}, \f{states.py}, \f{state\_crosswalk.csv}, \f{tests/py/test\_states.py};
+add \f{.venv/} to \f{.gitignore} (already present).
+
+\textbf{Interfaces (produces).}
+\f{normalise(raw: str) -> str} (lowercase, strip, ``\&''$\to$``and'', collapse spaces);
+\f{to\_state\_id(raw: str) -> str}; \f{class UnknownStateError(ValueError)};
+\f{MAIN\_SAMPLE: tuple[str, ...]} (30); \f{ALL\_IDS: tuple[str, ...]} (35).
+The crosswalk CSV has columns \f{raw\_name,state\_id}, and \f{raw\_name} is already normalised.
+
+\begin{steps}
+\item Create the venv: \f{uv venv .venv \&\& uv pip install -r requirements.txt}.
+\item Write the failing tests:
+\begin{verbatim}
+PHONEPE_36 = [...]  # the 36 names in PhonePe map/transaction/hover 2026/2.json, verbatim
+@pytest.mark.parametrize("raw,sid", [
+  ("Orissa","odisha"), ("ODISHA ","odisha"), ("Andaman And Nicobar Islands","andaman_nicobar"),
+  ("andaman & nicobar islands","andaman_nicobar"), ("Jammu and Kashmir","jammu_kashmir"),
+  ("ladakh","jammu_kashmir"), ("NCT of Delhi","delhi"), ("Pondicherry","puducherry"),
+  ("dadra & nagar haveli & daman & diu","dnh_dd"), ("Dadra and Nagar Haveli","dnh_dd"),
+  ("Daman and Diu","dnh_dd"), ("Uttaranchal","uttarakhand")])
+def test_variants(raw, sid): assert to_state_id(raw) == sid
+def test_unknown():
+    with pytest.raises(UnknownStateError, match="Atlantis"): to_state_id("Atlantis")
+def test_phonepe_names(): assert {to_state_id(n) for n in PHONEPE_36} == set(ALL_IDS)
+def test_samples(): assert len(MAIN_SAMPLE)==30 and len(ALL_IDS)==35 and set(MAIN_SAMPLE)<=set(ALL_IDS)
+\end{verbatim}
+      The 36 PhonePe names (verified at the pinned commit): \f{andaman \& nicobar islands, andhra pradesh,
+      arunachal pradesh, assam, bihar, chandigarh, chhattisgarh, dadra \& nagar haveli \& daman \& diu, delhi, goa,
+      gujarat, haryana, himachal pradesh, jammu \& kashmir, jharkhand, karnataka, kerala, ladakh, lakshadweep,
+      madhya pradesh, maharashtra, manipur, meghalaya, mizoram, nagaland, odisha, puducherry, punjab, rajasthan,
+      sikkim, tamil nadu, telangana, tripura, uttar pradesh, uttarakhand, west bengal}.
+\item Run \f{.venv/bin/pytest tests/py/test\_states.py -v}. Expected: FAIL (ImportError).
+\item Implement \f{states.py} and fill \f{state\_crosswalk.csv} (one row for each variant above, plus each canonical name).
+\item Run the tests. Expected: all PASS.
+\item Commit: \f{git add pyproject.toml requirements.txt src/py tests/py \&\& git commit -m "feat: state crosswalk"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 2: PhonePe fetch and parse}
+\textbf{Files.} Create \f{src/py/btpdata/periods.py}, \f{fetch\_phonepe.py}, \f{parse\_phonepe.py},
+\f{tests/py/test\_phonepe.py}, and fixtures under \f{tests/py/fixtures/phonepe/} at the repo's relative
+paths \f{data/map/<kind>/hover/country/india/2018/1.json}, with \f{<kind>} = \f{transaction}, \f{user}.
+
+\textbf{Interfaces.} Consumes \f{to\_state\_id}. Produces:
+\f{quarters(start: str = "2018Q1", end: str = "2026Q2") -> list[str]};
+\f{PHONEPE\_COMMIT: str}; \f{fetch(dest: Path, commit: str = PHONEPE\_COMMIT) -> Path};
+\f{parse\_transactions(path: Path, period: str) -> pd.DataFrame};
+\f{parse\_users(path: Path, period: str) -> pd.DataFrame};
+\f{build\_interim(repo: Path, out: Path, periods: list[str]) -> pd.DataFrame}.
+Variables: \f{phonepe\_count}, \f{phonepe\_amount\_inr}, \f{phonepe\_users}; \f{source = "phonepe@<commit[:7]>"}.
+
+\textbf{JSON layout (verified at the pinned commit).}
+Transactions: \f{data.hoverDataList[] = \{name, metric:[\{type:"TOTAL", count, amount\}]\}}.
+Users: \f{data.hoverData = \{<name>: \{registeredCount\}\}}. Path: \f{data/map/<kind>/hover/country/india/<year>/<q>.json}.
+
+\begin{steps}
+\item Write fixtures. Transactions 2018Q1: andhra pradesh (count 10862829, amount 14001071206.72507),
+      jammu \& kashmir (100, 1000.0), ladakh (10, 50.0). Users: the same three names with 500, 40, 5.
+\item Write the failing tests:
+\begin{verbatim}
+def test_quarters(): q = quarters(); assert len(q)==34 and q[0]=="2018Q1" and q[-1]=="2026Q2"
+def test_parse_and_merge(tmp_path):
+    df = build_interim(FIX, tmp_path/"p.csv", ["2018Q1"])
+    assert list(df.columns) == ["state_id","period","variable","value","source"]
+    v = df.set_index(["state_id","variable"])["value"]
+    assert v[("andhra_pradesh","phonepe_count")] == 10862829
+    assert v[("jammu_kashmir","phonepe_count")] == 110
+    assert v[("jammu_kashmir","phonepe_amount_inr")] == 1050.0
+    assert v[("jammu_kashmir","phonepe_users")] == 45
+    assert "ladakh" not in set(df.state_id)
+def test_missing_quarter_fails(tmp_path):
+    with pytest.raises(FileNotFoundError, match="2018/2.json"):
+        build_interim(FIX, tmp_path/"p.csv", ["2018Q1","2018Q2"])
+\end{verbatim}
+\item Run \f{.venv/bin/pytest tests/py/test\_phonepe.py -v}. Expected: FAIL (ImportError).
+\item Implement. \f{build\_interim} maps names, then sums with \f{groupby(["state\_id","period","variable"])}.
+      \f{fetch} runs: \f{git clone --filter=blob:none --no-checkout <url> <dest>/repo}; \f{git sparse-checkout set
+      data/map/transaction/hover/country/india data/map/user/hover/country/india}; \f{git checkout <commit>};
+      then appends a manifest row.
+\item Run the tests. Expected: PASS.
+\item Run on real data: \f{PYTHONPATH=src/py .venv/bin/python -m btpdata.fetch\_phonepe \&\& PYTHONPATH=src/py .venv/bin/python -m btpdata.parse\_phonepe}.
+      Expected: \f{data/interim/phonepe.csv} has $35 \times 34 \times 3 = 3570$ rows.
+\item Commit (code, tests, fixtures, \f{data/raw/phonepe/manifest.csv}, \f{data/interim/phonepe.csv}):
+      \f{git commit -m "feat: PhonePe Pulse ingestion"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 3: Population}
+\textbf{Files.} Create \f{data/manual/population\_ncp2020.csv}, \f{data/manual/manifest.csv},
+\f{src/py/btpdata/population.py}, \f{tests/py/test\_population.py}.
+
+\textbf{Interfaces.} Produces \f{load\_annual(path: Path) -> pd.DataFrame} (\f{state\_id, year, population},
+in persons, merged ids summed); \f{to\_quarterly(annual: pd.DataFrame, periods: list[str]) -> pd.DataFrame}
+(\f{state\_id, period, population}); \f{main()} writes \f{data/interim/population.csv} (variable \f{population}).
+
+\textbf{Interpolation rule.} The value for year $y$ is the $y$Q1 value. For $k = 1,2,3$:
+$p_{y\mathrm{Q}(k+1)} = p_y + \tfrac{k}{4}(p_{y+1} - p_y)$.
+
+\begin{steps}
+\item Transcribe the state table of projected total population (as of 1 March), years 2018--2027, from the
+      \emph{Report of the Technical Group on Population Projections: India and States 2011--2036} (National
+      Commission on Population, MoHFW, July 2020) into \f{population\_ncp2020.csv}, with columns
+      \f{raw\_name,year,population\_thousands}. Include the India row as \f{raw\_name = "india"}. Record the table
+      number and page in \f{manifest.csv}.
+\item Write the failing tests:
+\begin{verbatim}
+def test_interp():
+    a = pd.DataFrame({"state_id":["x"]*2,"year":[2018,2019],"population":[1000.,1400.]})
+    q = to_quarterly(a, ["2018Q1","2018Q2","2018Q3","2018Q4","2019Q1"])
+    assert q.population.tolist() == [1000.,1100.,1200.,1300.,1400.]
+def test_merge(tmp_path):  # csv with jammu & kashmir 900, ladakh 100 (thousands), 2018
+    assert load_annual(p).query("state_id=='jammu_kashmir'").population.item() == 1_000_000
+def test_needs_next_year():
+    with pytest.raises(ValueError, match="2027"): to_quarterly(annual_2018_to_2026, ["2026Q2"])
+def test_real_file_sums():  # each year: |sum(states) / india - 1| < 0.01
+def test_real_file_complete():  # to_quarterly(real, quarters()) has no NaN for the 35 ids
+\end{verbatim}
+\item Run \f{.venv/bin/pytest tests/py/test\_population.py -v}. Expected: FAIL.
+\item Implement \f{population.py}. The India row is used only in the sum test; \f{load\_annual} drops it.
+      If a small UT is not in the report, \f{test\_real\_file\_complete} fails. Then stop and ask the user
+      (options: a second source, or leave the UT out of ALL\_IDS).
+\item Run the tests. Expected: PASS.
+\item Commit: \f{git commit -m "feat: population projections, quarterly"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 4: State CPI deflator}
+\textbf{Files.} Create \f{data/raw/cpi/} (manual download + manifest), \f{src/py/btpdata/cpi.py},
+\f{tests/py/test\_cpi.py}, \f{tests/py/fixtures/cpi/} (header + 3 rows copied from the real file, same format).
+
+\textbf{Interfaces.} Produces \f{read\_raw(path: Path) -> pd.DataFrame} (\f{state\_id, month, cpi, base});
+\f{link\_bases(df, factors: dict[str, float]) -> pd.DataFrame} (all values on base 2012=100);
+\f{to\_quarterly(df) -> pd.DataFrame} (\f{state\_id, period, cpi}); \f{main()} writes \f{data/interim/cpi.csv},
+with variables \f{cpi} and \f{cpi\_fallback} (1 if the all-India CPI was used).
+
+\begin{steps}
+\item Download from MoSPI (eSankhyiki portal, CPI): monthly state-wise CPI \emph{Combined, General index},
+      January 2018 -- June 2026, in every base the portal gives. If there is a newer base, also get the official
+      linking factor. Save the files to \f{data/raw/cpi/}, add manifest rows, and copy a fixture.
+\item Write the failing tests:
+\begin{verbatim}
+# q(cpi=[...]): test-local helper; builds Jan..Mar 2018 rows for one state, returns to_quarterly(...).cpi[0]
+def test_quarter_mean(): assert q(cpi=[100,101,102]) == 101.0      # Jan-Mar -> 2018Q1
+def test_quarter_needs_three_months(): assert math.isnan(q(cpi=[100,101]))
+def test_link_no_jump():  # old base Dec-2025 = 180.0; new base Jan-2026 = 92.5; factor 1.95
+    s = link_bases(df, {"all_india":1.95}); assert abs(s.cpi.iloc[-1]/180.0 - 1) < 0.02
+def test_fixture_reads(): df = read_raw(FIX); assert set(df.columns)=={"state_id","month","cpi","base"}
+def test_fallback(): # a state absent from the file gets all-India values and cpi_fallback == 1
+\end{verbatim}
+\item Run \f{.venv/bin/pytest tests/py/test\_cpi.py -v}. Expected: FAIL.
+\item Implement \f{cpi.py}. \f{read\_raw} is written to match the fixture's real format. For merged ids, use the
+      CPI of the larger-population component (J\&K for \f{jammu\_kashmir}). If the file gives a per-state linking
+      factor, use it; if not, use the all-India factor, and record which one in the manifest \f{notes}.
+\item Run the tests. Expected: PASS.
+\item Commit: \f{git commit -m "feat: state CPI deflator"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 5: Quarterly panel build and checks}
+\textbf{Files.} Create \f{src/py/btpdata/build\_panels.py}, \f{tests/py/test\_build\_panels.py}.
+
+\textbf{Interfaces.} Consumes the interim files of Tasks 2--4. Produces
+\f{build\_quarterly(interim\_dir: Path) -> pd.DataFrame};
+\f{check\_panel(df: pd.DataFrame) -> None} (raises \f{PanelCheckError});
+\f{coverage(df: pd.DataFrame) -> pd.DataFrame} (\f{variable, state\_id, n\_missing});
+\f{main()} writes \f{data/final/panel\_quarterly.csv} and \f{data/final/coverage\_report.csv}.
+
+\textbf{Output columns.} \f{state\_id, period, in\_main\_sample, phonepe\_count, phonepe\_amount\_inr, phonepe\_users,
+population, cpi, cpi\_fallback, count\_pc, real\_amount\_pc, users\_per\_1000, ln\_count\_pc, ln\_real\_amount\_pc}.
+Here \f{count\_pc} = count/pop; \f{real\_amount\_pc} = amount$\times$100/cpi/pop; \f{users\_per\_1000} = users$\times$1000/pop.
+
+\begin{steps}
+\item Write the failing tests (build small interim CSVs in \f{tmp\_path}):
+\begin{verbatim}
+def test_merged_per_capita(): # jammu_kashmir count 110, population 1000 -> count_pc == 0.11
+def test_duplicate():  with pytest.raises(PanelCheckError, match="duplicate"): check_panel(dup)
+def test_negative():   with pytest.raises(PanelCheckError, match="negative"):  check_panel(neg)
+def test_outlier():    # one state count_pc = 11 x median of others in 2018Q1
+    with pytest.raises(PanelCheckError, match=r"outlier.*goa.*2018Q1"): check_panel(out)
+def test_zero_is_nan_not_inf():
+    df = build_quarterly(d_zero)
+    assert df.ln_count_pc.isna().sum() == 1
+    assert np.isfinite(df.ln_count_pc.dropna()).all()
+    assert coverage(df).query("variable=='ln_count_pc'").n_missing.sum() == 1
+def test_main_sample_flag(): assert df.in_main_sample.sum() == 30 * n_periods
+\end{verbatim}
+\item Run \f{.venv/bin/pytest tests/py/test\_build\_panels.py -v}. Expected: FAIL.
+\item Implement \f{build\_panels.py}: pivot the interim tables to wide, merge on (\f{state\_id}, \f{period}),
+      derive the columns, run \f{check\_panel}, write the files. The outlier check covers \f{count\_pc},
+      \f{real\_amount\_pc} and \f{users\_per\_1000}.
+\item Run the tests. Expected: PASS.
+\item Run on real data: \f{PYTHONPATH=src/py .venv/bin/python -m btpdata.build\_panels}. Expected: 1190 rows ($35\times34$). If the
+      outlier check fails, stop and report the state, period and value to the user.
+\item Commit (code, tests, \f{data/final/*.csv}): \f{git commit -m "feat: quarterly panel build with checks"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 6: NPCI state data and proxy validation}
+\textbf{Files.} Create \f{data/raw/npci/} (manual download + manifest), \f{src/py/btpdata/npci.py},
+\f{src/py/btpdata/validation.py}, \f{tests/py/test\_npci.py}, \f{tests/py/test\_validation.py}, fixture copied from one real file.
+
+\textbf{Interfaces.} Produces \f{UNATTRIBUTED\_LABELS: frozenset[str]} (set from the real file);
+\f{read\_month(path: Path, month: str) -> pd.DataFrame} (\f{state\_id, month, npci\_volume, npci\_value\_inr};
+attributed rows only); \f{to\_quarterly(df) -> pd.DataFrame} (sum of three months, else row dropped);
+\f{compare(panel: pd.DataFrame, npci\_q: pd.DataFrame) -> pd.DataFrame} with columns
+\f{period, measure, pearson, spearman, n\_states}, measures \f{share\_count, share\_value, count\_pc, value\_pc};
+\f{main()} writes \f{data/final/validation\_npci.csv} for 2025Q2--2026Q2.
+
+\begin{steps}
+\item Download the NPCI state-wise UPI files, April 2025 -- June 2026, from the NPCI UPI ecosystem statistics page
+      in a browser (the page needs JavaScript). Save them to \f{data/raw/npci/} with manifest rows, and record the
+      units (for example Mn, Cr) in \f{notes}. Copy one file's header and 3 rows plus the unattributed row as the fixture.
+\item Write the failing tests:
+\begin{verbatim}
+def test_unattributed_dropped():
+    df = read_month(FIX, "2025-04"); assert not df.state_id.isin(["others"]).any()
+def test_units(): # value converted to rupees using the unit in the header (e.g. Cr -> x 1e7)
+def test_unknown_row_fails(): # a row not in crosswalk and not in UNATTRIBUTED_LABELS -> UnknownStateError
+def test_shares_over_attributed():  # volumes 10,30,60 + Others 100 -> shares 0.1,0.3,0.6
+def test_perfect_agreement():
+    r = compare(p, n); assert (r.pearson.round(9) == 1).all() and (r.spearman == 1).all()
+def test_n_states_intersection(): # 3 states in panel, 2 in npci -> n_states == 2
+\end{verbatim}
+\item Run \f{.venv/bin/pytest tests/py/test\_npci.py tests/py/test\_validation.py -v}. Expected: FAIL.
+\item Implement \f{npci.py} (written to match the fixture's real format) and \f{validation.py} (pandas
+      \f{corr(method="pearson")} and \f{corr(method="spearman")}, over the states present in both).
+\item Run the tests. Expected: PASS.
+\item Run on real data. Expected: 20 rows (5 quarters $\times$ 4 measures). If any \f{share\_count} Pearson
+      value is below 0.8, report it to the user (spec risk~2). Do not change the method.
+\item Commit: \f{git commit -m "feat: NPCI validation of PhonePe proxy"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 7: State boundaries for maps}
+\textbf{Files.} Create \f{src/py/btpdata/boundaries.py}, \f{tests/py/test\_boundaries.py}, \f{data/raw/boundaries/}.
+
+\textbf{Interfaces.} Produces \f{add\_state\_ids(geojson: dict, name\_field: str) -> dict} (adds property
+\f{state\_id}; merged ids keep separate features with the same id); \f{main()} writes
+\f{data/interim/india\_states.geojson}.
+
+\begin{steps}
+\item Download geoBoundaries \emph{gbOpen IND ADM1} (simplified GeoJSON, CC BY 4.0) at a fixed release into
+      \f{data/raw/boundaries/}, and add a manifest row with the release tag.
+\item Write the failing tests: two features named ``Orissa'' and ``Ladakh'' $\to$ \f{state\_id} \f{odisha} and
+      \f{jammu\_kashmir}; a feature named ``Atlantis'' raises \f{UnknownStateError}; on the real file, the set of
+      ids equals \f{set(ALL\_IDS)}.
+\item Run \f{.venv/bin/pytest tests/py/test\_boundaries.py -v}. Expected: FAIL.
+\item Implement \f{boundaries.py}. Add any new name variants to \f{state\_crosswalk.csv}.
+\item Run the tests. Expected: PASS.
+\item Commit: \f{git commit -m "feat: state boundaries with state ids"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 8: R environment and descriptive results}
+\textbf{Files.} Create \f{src/R/lib/descriptives\_fns.R}, \f{src/R/01\_descriptives.R}, \f{tests/R/test\_descriptives.R},
+\f{renv.lock}, \f{.Rprofile}.
+
+\textbf{Interfaces.} Consumes \f{panel\_quarterly.csv}, \f{validation\_npci.csv}, \f{india\_states.geojson}. Produces
+\f{sigma\_cv(dt, var) -> data.table(period, cv)} (cross-state \f{sd(n-1)/mean} for each period, main sample);
+\f{beta\_convergence(dt, var, start = "2018Q4", end = "2026Q2") -> lm} (annualised growth $= (\ln x_{end} - \ln
+x_{start})/7.5$ regressed on $\ln x_{start}$). The start is 2018Q4 to avoid the very small 2018Q1 base;
+7.5 years separate 2018Q4 and 2026Q2.
+
+\textbf{Outputs.} \f{output/figures/}: \f{adoption\_trend\_main.pdf} (median and IQR of \f{ln\_real\_amount\_pc}, main
+sample), \f{adoption\_map\_2018Q4.pdf}, \f{adoption\_map\_2026Q2.pdf} (choropleth of \f{real\_amount\_pc}),
+\f{sigma\_convergence.pdf}. \f{output/tables/}: \f{beta\_convergence.tex} (modelsummary, \f{output = "latex"}),
+\f{validation\_npci.tex}, \f{summary\_stats.tex}.
+
+\begin{steps}
+\item Initialise renv: \f{Rscript -e 'renv::init(bare=TRUE)'}; then
+      \f{Rscript -e 'install.packages(c("data.table","ggplot2","sf","modelsummary","testthat"))'};
+      then \f{Rscript -e 'renv::snapshot()'}.
+\item Write the failing tests:
+\begin{verbatim}
+test_that("cv", expect_equal(sigma_cv(dt3, "x")$cv, 0.5))          # values 1,2,3 in one period
+test_that("beta", expect_equal(unname(coef(beta_convergence(dts, "x"))[2]), -0.02, tolerance=1e-9))
+# dts built so that growth == 0.1 - 0.02 * ln(x_start) exactly
+\end{verbatim}
+\item Run \f{Rscript -e 'testthat::test\_dir("tests/R")'}. Expected: FAIL.
+\item Implement \f{descriptives\_fns.R}, then \f{01\_descriptives.R}, which sources it and writes all the outputs.
+\item Run the tests (expected: PASS), then \f{Rscript src/R/01\_descriptives.R}. Expected: all 7 output files exist
+      and are not empty.
+\item Commit (code, tests, \f{renv.lock}, \f{output/}): \f{git commit -m "feat: descriptive results"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 9: Makefile and end-to-end run}
+\textbf{Files.} Create \f{Makefile}.
+
+\textbf{Targets.} \f{test} (pytest + testthat); \f{data} (Tasks 2--7 \f{main()}s, in order); \f{analysis}
+(\f{01\_descriptives.R}); \f{report} (\f{latexmk} in \f{thesis/btp1} and \f{thesis/btp1-slides});
+\f{all} = \f{test data analysis report}. Manual downloads are prerequisites: \f{data} stops with a clear
+message if \f{data/raw/cpi/} or \f{data/raw/npci/} is empty.
+
+\begin{steps}
+\item Write the Makefile.
+\item Run \f{make test data analysis} from a clean clone in the session scratchpad
+      (\f{git clone . \$SCRATCH/e2e}, where \f{\$SCRATCH} is the scratchpad directory of the executing session),
+      and copy \f{data/raw/} into it. Expected: exit 0, and the \f{data/final/} and \f{output/} files match the committed
+      ones (\f{git status} clean).
+\item Read \f{data/final/coverage\_report.csv} and list every main-sample variable with missing cells for the user.
+\item Commit: \f{git commit -m "build: Makefile pipeline"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 10: BTP-I report (\LaTeX)}
+\textbf{Files.} Create \f{thesis/btp1/main.tex}, \f{thesis/btp1/chapters/ch1\_intro.tex} \ldots
+\f{ch6\_plan.tex}, \f{thesis/btp1/refs.bib}.
+
+\textbf{Setup.} \f{report} class, 12pt, A4 (or the department template from Task~0); packages \f{natbib}
+(\f{plainnat}), \f{graphicx}, \f{booktabs}, \f{hyperref}; \f{\textbackslash graphicspath\{\{../../output/figures/\}\}};
+tables via \f{\textbackslash input\{../../output/tables/<name>.tex\}}.
+
+\textbf{refs.bib.} The seven key references in the spec, plus: ICRIER WP IPCIDE-wp1 (Reddy, Kedia, Shukla); Singh \&
+Ghosh (2021), \emph{Economic Analysis and Policy} 71:674--693; the PhonePe Pulse dataset (\f{@misc}, with the commit hash);
+NPCI UPI statistics (\f{@misc}, with the access date); the NCP 2020 population report.
+
+\textbf{Chapter outlines} (as \f{\%} comments at the top of each chapter file, from spec Section~6):
+Ch~1 background, problem, RQ1--RQ4 and hypotheses H1--H4; Ch~2 finance--growth, FI--ICT (Pradhan et al.),
+digital payments, gap; Ch~3 data availability findings, PhonePe as proxy, variable table, sample, the
+\f{coverage\_report} summary; Ch~4 Steps 0--3 of the spec; Ch~5 \f{adoption\_trend\_main}, the maps,
+\f{sigma\_convergence}, \f{beta\_convergence}, \f{validation\_npci}, \f{summary\_stats}; Ch~6 the BTP-II plan.
+
+\begin{steps}
+\item Create the files. Each chapter has its outline comments, the section headings, and the figure and table
+      includes listed above.
+\item Run \f{cd thesis/btp1 \&\& latexmk -pdf main.tex}. Expected: exit 0; \f{grep -E "undefined|Overfull" main.log}
+      prints nothing.
+\item Commit: \f{git commit -m "docs: BTP-I report skeleton"}.
+\item The student writes the chapters (weeks 3--4). Run the same compile check after each chapter.
+\end{steps}
+
+% =====================================================================
+\section{Task 11: BTP-I slides (Beamer)}
+\textbf{Files.} Create \f{thesis/btp1-slides/slides.tex} (shares \f{../btp1/refs.bib}).
+
+\textbf{Frames (14).} Title; Motivation; RQs and hypotheses; Literature and gap; Data availability; PhonePe Pulse
+as proxy; Variables and sample; Method plan; Adoption trend; Maps 2018Q4 vs 2026Q2; Convergence; NPCI
+validation; BTP-II plan; References.
+
+\begin{steps}
+\item Create \f{slides.tex} with the 14 frames, the figure includes and the speaker notes as \f{\%} comments.
+\item Run \f{cd thesis/btp1-slides \&\& latexmk -pdf slides.tex}. Expected: exit 0;
+      \f{grep -c '\textbackslash begin\{frame\}' slides.tex} prints 14.
+\item Commit: \f{git commit -m "docs: BTP-I slides"}.
+\end{steps}
+
+\end{document}

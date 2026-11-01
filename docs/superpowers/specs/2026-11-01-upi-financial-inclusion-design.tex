@@ -55,6 +55,8 @@
 \paragraph{Format rule.} All written outputs are in \LaTeX: reports and thesis (\texttt{report} class or the
 department template), slides (Beamer), paper (\texttt{elsarticle}). R writes tables as \texttt{.tex}
 files and figures as PDF; documents include them with \verb|\input| and \verb|\includegraphics|.
+Citations use \texttt{natbib} with BibTeX (\texttt{plainnat}). Biber and \texttt{elsarticle} are not
+installed; they are needed only at the paper stage.
 
 \section{Approach}
 
@@ -75,7 +77,7 @@ tests); a district panel as the core (PhonePe district coverage not confirmed; n
 \section{Sample and variables}
 
 \paragraph{Sample.} Main: 28 states, Delhi, and Jammu \& Kashmir (Ladakh merged into J\&K for
-consistency after the 2019 reorganisation). Robustness: (i) all 36 states and UTs; (ii) the 20 major
+consistency after the 2019 reorganisation). Robustness: (i) all states and UTs (35 units: PhonePe reports 36 names, and Ladakh merges into J\&K); (ii) the 20 major
 states of Pradhan et al.\ (2021).
 
 \begin{table}[h]
@@ -142,7 +144,8 @@ raw files go in \texttt{.gitignore} and the manifest records their origin.
 \paragraph{Step 0: description and validation} (\texttt{01\_descriptives.R}). Trends and maps of
 adoption; $\sigma$-convergence (coefficient of variation over time) and $\beta$-convergence.
 Proxy validation: Pearson and Spearman correlation of PhonePe vs NPCI state shares and per-capita
-values, for each month April 2025 -- June 2026.
+values, for each quarter 2025Q2 -- 2026Q2. NPCI months are summed to quarters, because PhonePe Pulse is
+quarterly.
 
 \paragraph{Step 1: series properties} (\texttt{03\_cd\_unitroot.R}). Pesaran CD test
 (\texttt{plm::pcdtest}). If dependence is present, CIPS (\texttt{plm::cipstest}); if not, IPS.
@@ -174,7 +177,7 @@ reporting instrument count, Hansen, and AR(2). The thesis states that $T \approx
 results suggestive only.
 
 \paragraph{Robustness} (\texttt{08\_robustness.R}). Alternative adoption measures (count, users);
-Sarma FI index; samples (all 36; 20 major states); excluding 2020; north-eastern states separately.
+Sarma FI index; samples (all 35 units; 20 major states); excluding 2020; north-eastern states separately.
 
 \paragraph{Wording rule.} Results are reported as predictive (Granger) causality, not as causal effects.
 
