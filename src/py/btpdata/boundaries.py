@@ -25,10 +25,15 @@ def add_state_ids(geojson: dict, name_field: str) -> dict:
 def fetch(dest: Path = Path("data/raw/boundaries")) -> Path:
     """Download the pinned GeoJSON if absent; verify sha256 from dest/manifest.csv."""
     target = dest / FILENAME
-    if target.exists():
-        return target
     with (dest / "manifest.csv").open(encoding="utf-8", newline="") as fh:
         row = next(r for r in csv.DictReader(fh) if r["file"] == FILENAME)
+    if target.exists():
+        body = target.read_bytes()
+        digest = hashlib.sha256(body).hexdigest()
+        if digest != row["sha256"]:
+            raise ValueError(f"sha256 mismatch for existing {target}: got {digest}, manifest "
+                             f"{row['sha256']}; delete the file to download it again")
+        return target
     with urllib.request.urlopen(row["url"]) as resp:
         body = resp.read()
     digest = hashlib.sha256(body).hexdigest()

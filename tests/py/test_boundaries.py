@@ -64,9 +64,24 @@ def test_fetch_sha_mismatch_raises(tmp_path):
         fetch(dest)
 
 
-def test_fetch_skips_when_present(tmp_path):
+def test_fetch_present_matching_hash_no_download(tmp_path):
+    import hashlib
+    from btpdata.boundaries import FILENAME, fetch
+    dest = tmp_path / "dest"
+    body = b"{}"
+    _manifest(dest, FILENAME, "file:///nonexistent", hashlib.sha256(body).hexdigest())
+    (dest / FILENAME).write_bytes(body)
+    assert fetch(dest) == dest / FILENAME
+
+
+def test_fetch_present_wrong_hash_raises(tmp_path):
+    import hashlib
     from btpdata.boundaries import FILENAME, fetch
     dest = tmp_path / "dest"
     _manifest(dest, FILENAME, "file:///nonexistent", "0" * 64)
     (dest / FILENAME).write_bytes(b"{}")
-    assert fetch(dest) == dest / FILENAME
+    actual = hashlib.sha256(b"{}").hexdigest()
+    with pytest.raises(ValueError) as exc:
+        fetch(dest)
+    msg = str(exc.value)
+    assert FILENAME in msg and "0" * 64 in msg and actual in msg and "delete" in msg
