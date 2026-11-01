@@ -1,0 +1,62 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage[numbers]{natbib}
+\usepackage{ifthen}
+\usepackage[hidelinks,pageanchor=false]{hyperref}
+\graphicspath{{../../output/figures/}}
+% Tables are added later with \input{../../output/tables/<name>.tex}
+
+% Title page macros
+\newcommand{\studentname}{Devansh Gupta}
+\newcommand{\rollno}{}% fill in
+\newcommand{\department}{}% fill in
+\newcommand{\supervisor}{Prof. Rudra Prakash Pradhan}% supervisor
+\newcommand{\school}{Vinod Gupta School of Management, IIT Kharagpur}% school
+\newcommand{\reporttitle}{Digital Payments (UPI) and Financial Inclusion across Indian States}% title
+\newcommand{\reporttype}{B.Tech Project Report, Part I}% report type
+\newcommand{\reportdate}{November 2026}% date
+
+\begin{document}
+\pagenumbering{roman}
+
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+{\LARGE\bfseries \reporttitle\par}
+\vspace{1.5cm}
+{\Large \reporttype\par}
+\vspace{2cm}
+{\large Submitted by\par}
+{\Large \studentname\par}
+\ifthenelse{\equal{\rollno}{}}{}{{\large Roll No.\ \rollno\par}}
+\ifthenelse{\equal{\department}{}}{}{{\large \department\par}}
+\vspace{1.5cm}
+{\large Supervisor\par}
+{\Large \supervisor\par}
+\vspace{0.5cm}
+{\large \school\par}
+\vfill
+{\large \reportdate\par}
+\end{titlepage}
+
+\begin{abstract}
+% Outline (student writes): problem; data (PhonePe Pulse, NCP projections); methods planned; Part I status.
+\end{abstract}
+\tableofcontents
+\listoffigures
+\listoftables
+
+\clearpage\pagenumbering{arabic}
+\include{chapters/ch1_intro}% ch3_data, ch4_methods, ch5_results, ch6_conclusion come in Part 3
+\include{chapters/ch2_literature}% later chapters are added in Part 3
+
+\bibliographystyle{plainnat}
+\bibliography{../../references/refs}
+
+\end{document}

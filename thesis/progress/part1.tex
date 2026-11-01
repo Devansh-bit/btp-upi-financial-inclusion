@@ -1,0 +1,85 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage[numbers]{natbib}
+\PassOptionsToPackage{hyphens}{url}
+\usepackage[hidelinks]{hyperref}
+\urlstyle{tt}
+
+\title{BTP Progress Report --- Part 1}
+\author{Devansh Gupta}
+\date{1 November 2026}
+
+\begin{document}
+\maketitle
+
+\section{Scope of Part 1}
+Part 1 covers Tasks 1 to 3 of the implementation plan. Task 1 is the state crosswalk. Task 2 is the PhonePe Pulse ingestion. Task 3 is the population projections.
+Part 1 also includes the BTP-I report skeleton (Chapters 1 and 2, outline only).
+The design specification is \path{docs/superpowers/specs/2026-11-01-upi-financial-inclusion-design.tex}.
+
+\section{What was built}
+\paragraph{State crosswalk.}
+The file \path{src/py/btpdata/state_crosswalk.csv} maps the state names of each source to one \path{state_id}. There are 35 ids. The main sample has 30 ids: 28 states, Delhi, and Jammu and Kashmir (which includes Ladakh). The other five ids are union territories. The module \path{src/py/btpdata/states.py} reads the file.
+
+\paragraph{PhonePe Pulse ingestion.}
+The modules \path{fetch_phonepe.py} and \path{parse_phonepe.py} in \path{src/py/btpdata/} read PhonePe Pulse commit \texttt{257bf38} \citep{phonepe_pulse}. The output is \path{data/interim/phonepe.csv}. It covers 2018Q1 to 2026Q2 and has three variables: \path{phonepe_count}, \path{phonepe_amount_inr} and \path{phonepe_users}.
+
+\paragraph{Population projections.}
+The file \path{data/manual/population_ncp2020.csv} holds Table 8 of the NCP 2020 report \citep{ncp2020}, in thousands, as on 1 March. The module \path{src/py/btpdata/population.py} converts it to quarterly values and writes \path{data/interim/population.csv}. The rule is: the value for Q1 of year $y$ is the value for $y$. The value for quarter $q$ is $P_y + \frac{q-1}{4}(P_{y+1} - P_y)$. The rule needs the value for 2027 to compute 2026Q2.
+
+\section{Numbers}
+% Command (rows 2018Q1, 2022Q2, 2026Q2; sums over the 35 state_id values):
+%   .venv/bin/python -c "import pandas as pd; p=pd.read_csv('data/interim/phonepe.csv'); q=pd.read_csv('data/interim/population.csv');
+%   [print(per, (lambda s: (s.phonepe_count/1e6, s.phonepe_amount_inr/1e12, s.phonepe_users/1e6))(p[p.period==per].groupby('variable').value.sum()), q[q.period==per].value.sum()/1e6) for per in ['2018Q1','2022Q2','2026Q2']]"
+% Units: million = 1e6; Rs. 1 lakh crore = 1e12 rupees.
+\begin{table}[h]
+\centering
+\caption{Totals over the 35 state ids.}
+\begin{tabular}{lrrrr}
+\toprule
+Quarter & Transactions & Amount & Registered users & Population \\
+ & (million) & (Rs. lakh crore) & (million) & (million) \\
+\midrule
+2018Q1 & 139.98 & 0.17 & 47.48 & 1318.68 \\
+2022Q2 & 8953.70 & 15.10 & 393.81 & 1376.87 \\
+2026Q2 & 38664.29 & 45.50 & 711.65 & 1426.04 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% Command (row counts, without header line): wc -l data/interim/phonepe.csv data/interim/population.csv  (3571 and 1191 lines)
+The file \path{data/interim/phonepe.csv} has 3570 rows. The file \path{data/interim/population.csv} has 1190 rows. Each file has 35 state ids.
+
+% Command (NCP sum check): .venv/bin/python -c "import pandas as pd; n=pd.read_csv('data/manual/population_ncp2020.csv');
+%   [print(y, n[(n.year==y)&(n.raw_name!='india')].population_thousands.sum(), n[(n.year==y)&(n.raw_name=='india')].population_thousands.sum()) for y in (2018,2027)]"
+The sum of the state values divided by the India value is 1.0000015 for 2018 (1\,318\,680 and 1\,318\,678 thousand). It is 0.9999993 for 2027 (1\,433\,851 and 1\,433\,852 thousand).
+
+% Command: .venv/bin/pytest -q   (output: 27 passed in 0.36s)
+The test suite has 27 tests. All 27 pass.
+
+\section{Data findings so far}
+The specification (Section 1) lists three data constraints.
+\begin{itemize}
+\item NPCI publishes state-wise UPI data only from April 2025 \citep{npci_upi_state,medianama2025npci}. The PhonePe series is therefore the main adoption variable. The NPCI data is for validation only. One analysis \citep{dataful2026upi} reports that 27.5\% of FY25 UPI volume has no state attribution.
+\item The RBI Financial Inclusion Index is published for India only, not for states \citep{rbi_fiindex2025}.
+\item The PMJDY state-wise statistics are one snapshot (21 October 2026) with no history \citep{pmjdy_statewise}.
+\end{itemize}
+
+\section{Open items}
+\begin{itemize}
+\item Task 0: supervisor approval of the PhonePe proxy. Department rules for the report format.
+\item Manual downloads for Part 2: MoSPI state CPI, January 2018 to June 2026. NPCI state files, April 2025 to June 2026.
+\end{itemize}
+
+\section{Next}
+Part 2 covers Tasks 4 to 7.
+
+\bibliographystyle{plainnat}
+\bibliography{../../references/refs}
+\end{document}
