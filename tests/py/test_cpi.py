@@ -4,7 +4,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from btpdata.cpi import (apply_fallback, fill_gaps, link_bases, overlap_factors,
+from btpdata.periods import quarters
+
+from btpdata.cpi import (MAX_GAP_MONTHS, MIN_COVERAGE, apply_fallback, build, fill_gaps, link_bases, overlap_factors,
                          read_raw, to_quarterly)
 
 FIX = Path(__file__).parent / "fixtures" / "cpi" / "cpi_sample.json"
@@ -76,8 +78,28 @@ def test_gap_values_log_linear():
     assert np.isclose(f["2018-02"], 200.0) and np.isclose(f["2018-03"], 400.0)
 
 
-def test_long_gap_not_filled():
-    df = monthly("bihar", ["2018-01", "2018-05"], [100.0, 500.0])
-    f = fill_gaps(df)
-    assert len(f) == 2
-    assert math.isnan(to_quarterly(f).cpi[0])
+def test_three_month_gap_filled_and_counted():
+    assert MAX_GAP_MONTHS == 3
+    months = ["2018-01", "2018-02", "2018-03", "2018-07"]
+    out = to_quarterly(fill_gaps(monthly("bihar", months, [100.0, 100.0, 100.0, 1600.0])))
+    row = out[out.period == "2018Q2"].iloc[0]  # log-linear: 200, 400, 800
+    assert row.cpi_interpolated_months == 3
+    assert math.isclose(row.cpi, (200 + 400 + 800) / 3, rel_tol=1e-9)
+
+
+def test_four_month_gap_not_filled():
+    months = ["2018-01", "2018-02", "2018-03", "2018-08"]
+    f = fill_gaps(monthly("bihar", months, [100.0, 100.0, 100.0, 1600.0]))
+    assert len(f) == 4
+    out = apply_fallback(to_quarterly(f), ["bihar"], ["2018Q2"])  # no Q2 rows -> NaN
+    assert math.isnan(out.cpi.iloc[0])
+
+
+def test_low_coverage_uses_all_india_whole_period():
+    assert MIN_COVERAGE == 0.9
+    months = [f"2018-{m:02d}" for m in range(1, 13)]
+    df = pd.concat([monthly("all_india", months, [float(100 + i) for i in range(12)]),
+                    monthly("bihar", months[:6], [10.0] * 6)])
+    wide, _ = build(df, ids=["bihar"], periods=quarters("2018Q1", "2018Q4"))
+    assert (wide.cpi_fallback == 1).all()
+    assert wide.cpi.tolist() == [101.0, 104.0, 107.0, 110.0]

@@ -17,7 +17,8 @@ SOURCE = "mospi_cpi_2012linked"
 ALL_INDIA = "all_india"
 OVERLAP_YEAR = "2025"
 LINK_MONTH = "2026-01"  # first month taken from base 2024
-MAX_GAP = 2
+MAX_GAP_MONTHS = 3
+MIN_COVERAGE = 0.9  # own series needs values for this share of the months, else all-India
 RAW = Path("data/raw/cpi/mospi_cpi_state_general_combined.json")
 POPULATION = Path("data/manual/population_ncp2020.csv")
 OUT = Path("data/interim/cpi.csv")
@@ -80,12 +81,12 @@ def link_bases(df: pd.DataFrame, factors: dict[str, float]) -> pd.DataFrame:
     old = df[(df.base == "2012") & (df.month < LINK_MONTH)]
     new = df[(df.base == "2024") & (df.month >= LINK_MONTH)].copy()
     new["cpi"] = new.cpi * new.state_id.map(factors)
-    out = pd.concat([old, new], ignore_index=True)
+    out = pd.concat([old, new], ignore_index=True).dropna(subset=["cpi"])
     return out.sort_values(["state_id", "month"]).reset_index(drop=True)
 
 
 def fill_gaps(df: pd.DataFrame) -> pd.DataFrame:
-    """Fill interior gaps of at most MAX_GAP months by linear interpolation of log(cpi).
+    """Fill interior gaps of at most MAX_GAP_MONTHS months by linear interpolation of log(cpi).
     Adds boolean column `interpolated`."""
     parts = []
     for sid, g in df.groupby("state_id"):
@@ -94,7 +95,7 @@ def fill_gaps(df: pd.DataFrame) -> pd.DataFrame:
         missing = full.isna()
         run_id = (missing != missing.shift()).cumsum()
         run_len = missing.groupby(run_id).transform("sum")
-        fillable = missing & (run_len <= MAX_GAP)
+        fillable = missing & (run_len <= MAX_GAP_MONTHS)
         logs = np.log(full).interpolate(method="linear", limit_area="inside")
         filled = full.where(~fillable, np.exp(logs))
         keep = ~missing | fillable
@@ -139,10 +140,24 @@ def apply_fallback(qdf: pd.DataFrame, ids, periods: list[str] | None = None) -> 
     return pd.concat(frames, ignore_index=True)
 
 
+def low_coverage_states(linked: pd.DataFrame, periods: list[str]) -> set[str]:
+    """Own series (not all-India) with values for < MIN_COVERAGE of the months spanned by
+    `periods`, counted on the linked series before gap filling."""
+    first = f"{periods[0][:4]}-{(int(periods[0][5]) - 1) * 3 + 1:02d}"
+    last = f"{periods[-1][:4]}-{int(periods[-1][5]) * 3:02d}"
+    n_months = len(pd.period_range(first, last, freq="M"))
+    inside = linked[(linked.month >= first) & (linked.month <= last)]
+    share = inside.groupby("state_id").month.nunique() / n_months
+    return {sid for sid, v in share.items() if sid != ALL_INDIA and v < MIN_COVERAGE}
+
+
 def build(df: pd.DataFrame, ids=ALL_IDS, periods: list[str] | None = None):
+    periods = periods or quarters()
     factors = overlap_factors(df)
-    quarterly = to_quarterly(fill_gaps(link_bases(df, factors)))
-    return apply_fallback(quarterly, ids, periods or quarters()), factors
+    linked = link_bases(df, factors)
+    sparse = low_coverage_states(linked, periods)
+    quarterly = to_quarterly(fill_gaps(linked[~linked.state_id.isin(sparse)]))
+    return apply_fallback(quarterly, ids, periods), factors
 
 
 def main() -> None:
