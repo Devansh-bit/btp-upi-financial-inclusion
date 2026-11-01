@@ -13,7 +13,8 @@
 *.nav
 *.snm
 # Data (origin recorded in data/raw/*/manifest.csv)
-data/raw/
+data/raw/*/*
+!data/raw/*/manifest.csv
 # Python / R
 __pycache__/
 .venv/
