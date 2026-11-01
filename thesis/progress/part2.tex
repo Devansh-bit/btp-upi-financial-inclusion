@@ -43,7 +43,7 @@ The file has 36 features. The features have 35 distinct \path{state_id} values. 
 
 \section{Processing decisions}\label{sec:decisions}
 \paragraph{CPI base linking.}
-MoSPI publishes no state linking factor between base 2012 and base 2024. The code uses the 2025 overlap, where both bases have 12 months. The factor for state $s$ is
+No official state linking factor between base 2012 and base 2024 was found. The code uses the 2025 overlap, where both bases have 12 months. The factor for state $s$ is
 \[
 f_s = \frac{\overline{I^{2012}_{s,2025}}}{\overline{I^{2024}_{s,2025}}}.
 \]
@@ -61,7 +61,8 @@ The code fills gaps of up to 3 months by log-linear interpolation. The gaps are 
 In 2020Q2, 34 states have interpolated months. Of these, 31 states have 2 months (April and May 2020). Three states have 3 months (Manipur, Nagaland and Puducherry).
 
 \paragraph{Arunachal Pradesh.}
-The own base-2012 series of Arunachal Pradesh is mostly empty. The code uses the all-India series for this state. The column \path{cpi_fallback} is 1 for this state.
+% Command: .venv/bin/python -c "import json,pandas as pd; df=pd.DataFrame(json.load(open('data/raw/cpi/mospi_cpi_state_general_combined.json'))['data']['base2012']['rows']); a=df[df.state=='Arunachal Pradesh']; print(len(a), pd.to_numeric(a['index'],errors='coerce').notna().sum())"   (output: 106 10)
+Arunachal Pradesh has values in 10 of 106 base-2012 months. The code uses the all-India series for this state. The column \path{cpi_fallback} is 1 for this state.
 % Command: .venv/bin/python -c "import pandas as pd; c=pd.read_csv('data/interim/cpi.csv'); w=c.pivot(index=['state_id','period'],columns='variable',values='value').reset_index(); print(w[w.cpi_fallback==1].state_id.unique())"   (output: ['arunachal_pradesh'])
 It is the only state with \path{cpi_fallback} equal to 1.
 
@@ -137,7 +138,7 @@ The volume share is between 0.223 (May 2025) and 0.447 (June 2025). The value sh
 The level changes in June 2025. The volume share is 0.275 in April 2025 and 0.223 in May 2025. It is 0.447 in June 2025. From June 2025 to September 2026 it is between 0.422 and 0.447. The value share is 0.257 in April 2025 and 0.199 in May 2025. From June 2025 it is between 0.379 and 0.417.
 
 \subsection{Validation result}
-The share correlations are between 0.897 and 0.923 (Pearson) and between 0.953 and 0.967 (Spearman). The per-capita correlations are between 0.615 and 0.742 (Pearson) and between 0.455 and 0.606 (Spearman).
+The share correlations are between 0.897 and 0.923 (Pearson) and between 0.953 and 0.967 (Spearman). The per-capita correlations are between 0.615 and 0.742 (Pearson) and between 0.455 and 0.605 (Spearman).
 % Command: .venv/bin/python -c "import pandas as pd; v=pd.read_csv('data/final/validation_npci.csv'); print(v.groupby('measure')[['pearson','spearman']].agg(['min','max']).round(3))"
 %   (output: share_count P 0.897-0.923, S 0.953-0.967; share_value P 0.897-0.923, S 0.954-0.961; count_pc P 0.615-0.708, S 0.455-0.605; value_pc P 0.647-0.742, S 0.480-0.583)
 The Pearson coefficient for \path{share_count} falls from 0.923 in 2025Q2 to 0.897 in 2025Q4. It is 0.901 in 2026Q1 and in 2026Q2. The per-capita coefficients are lower than the share coefficients in every quarter. The share measures divide each state value by the sum over the 35 ids. The unclassified NPCI volume (0.42 to 0.45 of the national total from June 2025) is not part of that sum.
@@ -146,9 +147,9 @@ The Pearson coefficient for \path{share_count} falls from 0.923 in 2025Q2 to 0.8
 \begin{itemize}
 \item Task 0: supervisor approval of the PhonePe proxy. Department rules for the report format.
 \item The NPCI overlap with PhonePe is 5 quarters. The coefficients cannot test the PhonePe series before 2025Q2.
-\item The NPCI unclassified share changes level in June 2025 (Section~\ref{sec:unattr}). The cause is not known. The share-based and per-capita coefficients depend on how NPCI assigns the unclassified part.
-\item The deflator for Arunachal Pradesh is the all-India series. The state has no own series.
-\item The linking factors have no official source. Delhi (1.6997) and Manipur (2.1218) are outside the range 1.7 to 2.1.
+\item The NPCI unclassified share changes level in June 2025 (Section~\ref{sec:unattr}). The cause is not known.
+\item The deflator for Arunachal Pradesh is the all-India series. The state has values in 10 of 106 base-2012 months.
+\item No official state linking factor was found. Delhi (1.6997) and Manipur (2.1218) are outside the range 1.7 to 2.1.
 \end{itemize}
 
 \section{Next}
