@@ -21,3 +21,6 @@ __pycache__/
 .Rhistory
 .Rproj.user/
 renv/library/
+
+# Local copies of papers and reports (copyrighted; catalogued in references/source-log.csv)
+references/pdfs/
