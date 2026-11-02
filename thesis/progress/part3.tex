@@ -58,12 +58,12 @@ The slides are \path{thesis/btp1-slides/slides.tex}. The file has 14 frames.
 % Command: pdfinfo thesis/btp1-slides/slides.pdf | grep Pages   (output: 15; the PDF has 15 pages)
 The PDF has 15 pages.
 
-\section{Numbers}
+\section{Numbers}\label{sec:numbers}
 \subsection{Beta convergence}\label{sec:beta}
-The sample is the main sample (30 states and union territories), 2018Q4 to 2026Q2. For each state, growth is $(\ln x_{2026Q2} - \ln x_{2018Q4})/7.5$. The regression is growth on $\ln x_{2018Q4}$ with an intercept (OLS). The standard errors are the classical OLS standard errors.
+The sample is the main sample (30 states and union territories), 2018Q4 to 2026Q2. For each state, growth is $(\ln x_{2026Q2} - \ln x_{2018Q4})/7.5$. The window has 30 quarters, which is 7.5 years. The regression is growth on $\ln x_{2018Q4}$ with an intercept (OLS). The standard errors are the classical OLS standard errors.
 % Command: .venv/bin/python -c "import pandas as pd, numpy as np; p=pd.read_csv('data/final/panel_quarterly.csv'); m=p[p.in_main_sample]
 %   for v in ['real_amount_pc','count_pc']: w=m.pivot(index='state_id',columns='period',values=v); x=np.log(w['2018Q4']); y=(np.log(w['2026Q2'])-x)/7.5; X=np.c_[np.ones(30),x]; b=np.linalg.lstsq(X,y,rcond=None)[0]; r=y-X@b; se=np.sqrt(r@r/28*np.linalg.inv(X.T@X).diagonal()); print(v,b,se,1-r@r/((y-y.mean())@(y-y.mean())))"
-%   (output: real_amount_pc slope 0.0174 se 0.0138 intercept 0.3773 se 0.0788 R2 0.054 N 30; count_pc slope -0.0030 se 0.0128 intercept 0.5751 se 0.0211 R2 0.002 N 30; same values as output/tables/beta_convergence.tex)
+%   (output: real_amount_pc slope 0.0177 se 0.0138 intercept 0.3750 se 0.0789 R2 0.056 N 30; count_pc slope -0.0030 se 0.0128 intercept 0.5751 se 0.0211 R2 0.002 N 30; same values as output/tables/beta_convergence.tex)
 \begin{table}[h]
 \centering
 \caption{Beta regressions, main sample, 2018Q4 to 2026Q2. Dependent variable: annualised growth of the variable.}
@@ -71,21 +71,21 @@ The sample is the main sample (30 states and union territories), 2018Q4 to 2026Q
 \toprule
  & Real value per person & Transactions per person \\
 \midrule
-Slope on ln(initial level) & 0.0174 & $-0.0030$ \\
+Slope on ln(initial level) & 0.0177 & $-0.0030$ \\
 Standard error & 0.0138 & 0.0128 \\
-$R^2$ & 0.054 & 0.002 \\
+$R^2$ & 0.056 & 0.002 \\
 $N$ & 30 & 30 \\
 \bottomrule
 \end{tabular}
 \end{table}
-The slope for real value per person is positive (0.0174, standard error 0.0138). The slope for transactions per person is negative ($-0.0030$, standard error 0.0128). Neither slope is more than 1.3 standard errors from zero.
-% Command: python3 -c "print(0.0174/0.0138, 0.0030/0.0128)"   (output: 1.26 0.23)
+The slope for real value per person is positive (0.0177, standard error 0.0138). The slope for transactions per person is negative ($-0.0030$, standard error 0.0128). Neither slope is more than 1.3 standard errors from zero.
+% Command: python3 -c "print(0.0177/0.0138, 0.0030/0.0128)"   (output: 1.28 0.23)
 
 \subsection{Coefficient of variation}
 The coefficient of variation (CV) is the sample standard deviation divided by the mean, across the 30 main-sample states.
 % Command: .venv/bin/python -c "import pandas as pd; p=pd.read_csv('data/final/panel_quarterly.csv'); m=p[p.in_main_sample]
 %   for v in ['count_pc','real_amount_pc','users_per_1000']: print(v, [round(m[m.period==q][v].std(ddof=1)/m[m.period==q][v].mean(),3) for q in ['2018Q4','2026Q2']])"
-%   (output: count_pc [0.854, 0.865]; real_amount_pc [0.719, 0.906]; users_per_1000 [0.622, 0.379])
+%   (output: count_pc [0.854, 0.865]; real_amount_pc [0.719, 0.908]; users_per_1000 [0.622, 0.379])
 \begin{table}[h]
 \centering
 \caption{Coefficient of variation across the 30 main-sample states.}
@@ -94,17 +94,17 @@ The coefficient of variation (CV) is the sample standard deviation divided by th
 Variable & 2018Q4 & 2026Q2 \\
 \midrule
 Transactions per person & 0.854 & 0.865 \\
-Real value per person & 0.719 & 0.906 \\
+Real value per person & 0.719 & 0.908 \\
 Registered users per 1000 persons & 0.622 & 0.379 \\
 \bottomrule
 \end{tabular}
 \end{table}
-The CV of real value per person rose from 0.719 to 0.906. The CV of transactions per person rose from 0.854 to 0.865. The CV of registered users per 1000 persons fell from 0.622 to 0.379.
+The CV of real value per person rose from 0.719 to 0.908. The CV of transactions per person rose from 0.854 to 0.865. The CV of registered users per 1000 persons fell from 0.622 to 0.379.
 
 \subsection{Tests}
-% Command: .venv/bin/pytest -q   (output: 83 passed)
-% Command: Rscript -e 'testthat::test_dir("tests/R")'   (output: [ FAIL 0 | WARN 0 | SKIP 0 | PASS 2 ]; grep -c test_that tests/R/test_descriptives.R gives 2)
-The command \path{.venv/bin/pytest -q} reports 83 passed. The R command \path{testthat::test_dir("tests/R")} reports 0 failures, 0 warnings, 0 skipped and 2 passed expectations. The file \path{tests/R/test_descriptives.R} has 2 \texttt{test\_that} blocks.
+% Command: .venv/bin/pytest -q   (output: 98 passed)
+% Command: Rscript -e 'testthat::test_dir("tests/R")'   (output: [ FAIL 0 | WARN 0 | SKIP 0 | PASS 3 ]; grep -c test_that tests/R/test_descriptives.R gives 3)
+The command \path{.venv/bin/pytest -q} reports 98 passed. The R command \path{testthat::test_dir("tests/R")} reports 0 failures, 0 warnings, 0 skipped and 3 passed expectations. The file \path{tests/R/test_descriptives.R} has 3 \texttt{test\_that} blocks. These counts include the tests of Section~\ref{sec:corrections}.
 
 \subsection{Report length}
 % Command: make report; pdfinfo thesis/btp1/main.pdf | grep Pages   (output: 17)
@@ -116,13 +116,72 @@ The command \path{pdfinfo thesis/btp1/main.pdf} reports 17 pages after \texttt{m
 \caption{Median (line) and interquartile range (band) of the natural logarithm of real value per person (Rs. per person per quarter, 2012 prices), by quarter, 2018Q1 to 2026Q2. Sample: 30 main-sample states and union territories. Source: PhonePe Pulse \citep{phonepe_pulse}; deflator: linked state CPI \citep{mospi_cpi}.}
 \end{figure}
 
-\section{Data notes for the thesis}
+\section{Data notes for the thesis}\label{sec:datanotes}
 % Command: .venv/bin/python -c "import pandas as pd, json; p=pd.read_csv('data/final/panel_quarterly.csv'); q=p[p.period=='2026Q2']; t=q[q.state_id=='telangana'].iloc[0]; print(t.real_amount_pc, t.phonepe_amount_inr, t.phonepe_amount_inr/q.phonepe_amount_inr.sum(), t.population/q.population.sum(), len(q), q.phonepe_amount_inr.sum())
 %   d=json.load(open('data/raw/phonepe/repo/data/map/transaction/hover/country/india/2026/2.json'))['data']['hoverDataList']; tot=sum(e['metric'][0]['amount'] for e in d); tel=[e for e in d if e['name']=='telangana'][0]['metric'][0]['amount']; print(len(d), tot, tel, tel/tot)"
-%   (output: 61997.31 5.128e12 0.1127 0.0271 35 4.5496e13; JSON: 36 entries, total 4.5496e13, Telangana 5.128e12, share 0.1127)
-In 2026Q2, the real value per person in Telangana is 61,997 Rs. (2012 prices).
+%   (output: 62328.19 5.128e12 0.1127 0.0271 35 4.5496e13; JSON: 36 entries, total 4.5496e13, Telangana 5.128e12, share 0.1127)
+In 2026Q2, the real value per person in Telangana is 62,328 Rs. (2012 prices).
 Telangana has 11.3\% of the PhonePe transaction amount. The amount is Rs.\ $5.13\times10^{12}$ of Rs.\ $4.55\times10^{13}$. The PhonePe file for 2026 quarter 2 and the panel give the same total and the same share. Telangana has 2.7\% of the population of the 35 ids (38,664,500 persons).
 % Command: .venv/bin/python -c "import pandas as pd; p=pd.read_csv('data/final/panel_quarterly.csv'); q=p[p.period=='2026Q2']; print(q[q.state_id=='telangana'].population.iloc[0])"   (output: 38664500.0)
+
+\section{Corrections after final review}\label{sec:corrections}
+A review of the full branch found the items below. Each item has one commit. The numbers in Sections~\ref{sec:numbers} and~\ref{sec:datanotes} are the numbers after these corrections.
+
+\subsection{CPI link method}
+The old method linked base 2012 and base 2024 with an annual-mean factor, the ratio of the 2025 means:
+\[ f_s^{old} = \overline{CPI}^{2012}_{s,2025} \big/ \overline{CPI}^{2024}_{s,2025}. \]
+The new method uses the December 2025 factor:
+\[ f_s = CPI^{2012}_{s,\text{2025-12}} \big/ CPI^{2024}_{s,\text{2025-12}}. \]
+From 2026-01, the linked value is $CPI^{2024}_{s} \times f_s$. A state without December 2025 in both bases uses the latest 2025 month in both bases. All 34 state factors use December 2025.
+% Source: src/py/btpdata/cpi.py overlap_factors (FACTOR_MONTH = "2025-12"); no "lacks 2025-12" warning in the output of PYTHONPATH=src/py .venv/bin/python -m btpdata.cpi
+% Command: PYTHONPATH=src/py .venv/bin/python -c "import pandas as pd; from btpdata import cpi; f=cpi.overlap_factors(cpi.read_raw(cpi.RAW)); a=f.pop('all_india'); s=pd.Series(f); print(len(s), round(s.min(),4), s.idxmin(), round(s.median(),4), round(s.max(),4), s.idxmax(), round(a,4))"
+%   (output: 34 1.6859 delhi 1.8816 2.1065 manipur 1.902)
+The new method gives 34 state factors. The minimum is 1.686 (Delhi). The median is 1.882. The maximum is 2.107 (Manipur). The factor for the all-India series is 1.902.
+The Part 2 report (\path{part2.pdf}, Git tag \texttt{part2}) shows the factor statistics of the old method: minimum 1.700 (Delhi), median 1.891, maximum 2.122 (Manipur), all-India 1.899. These statistics are superseded.
+% Source: thesis/progress/part2.tex lines 51-55 (tag part2)
+
+The step at the link, in percentage points, is
+\[ 100 \times \Bigl( \frac{CPI^{link}_{s,\text{2026-01}}}{CPI^{link}_{s,\text{2025-12}}} - \frac{CPI^{2024}_{s,\text{2026-01}}}{CPI^{2024}_{s,\text{2025-12}}} \Bigr). \] It is the difference between the monthly change of the linked series and the monthly change of base 2024.
+% Command: PYTHONPATH=src/py .venv/bin/python -c "import pandas as pd; from btpdata import cpi; df=cpi.read_raw(cpi.RAW); b=df.set_index(['base','state_id','month']).cpi; ov=df[df.month.str.startswith('2025')].pivot_table(index=['state_id','month'],columns='base',values='cpi').dropna(); old={k: g['2012'].mean()/g['2024'].mean() for k,g in ov.groupby(level=0)}; new=cpi.overlap_factors(df)
+%   for n,fac in [('old',old),('new',new)]: s=pd.Series({k: 100*(b['2024',k,'2026-01']*v/b['2012',k,'2025-12']-b['2024',k,'2026-01']/b['2024',k,'2025-12']) for k,v in fac.items() if k!='all_india'}); print(n, len(s), s.abs().idxmax(), round(s[s.abs().idxmax()],2), s.abs().max())"
+%   (output: old 34 kerala -2.63 2.627; new 34 puducherry 0.0 2.22e-14)
+With the old factor, the largest step is $-2.63$ percentage points (Kerala). With the new factor, the largest absolute step over the 34 states is $2.2\times10^{-14}$ percentage points. This is zero to floating-point precision. The test \path{test_real_link_keeps_base2024_dec_jan_change} in \path{tests/py/test_cpi.py} checks for each state that the two ratios in the formula differ by less than $10^{-9}$.
+
+The change of method changes \path{data/interim/cpi.csv}, \path{data/final/panel_quarterly.csv}, the four figures and the tables \path{beta_convergence.tex} and \path{summary_stats.tex}.
+% Command: git show --stat HEAD   (the commit "fix: rebuild outputs after the final review fixes" lists these files)
+The numbers in this report change as follows:
+% Command: the beta, CV and Telangana commands of the sections Numbers and Data notes, run before and after the change (before: values of commit 086491f)
+\begin{itemize}
+\item Beta slope for real value per person: 0.0174 to 0.0177. $R^2$: 0.054 to 0.056. The standard error stays 0.0138.
+\item Beta slope for transactions per person: no change ($-0.0030$). This variable does not use the CPI.
+\item CV of real value per person in 2026Q2: 0.906 to 0.908. The 2018Q4 value stays 0.719.
+\item Real value per person in Telangana, 2026Q2: 61,997 Rs. to 62,328 Rs. (2012 prices).
+\end{itemize}
+The report length stays 17 pages.
+% Command: make report; pdfinfo thesis/btp1/main.pdf | grep Pages   (output: 17)
+
+\subsection{Other corrections}
+\begin{itemize}
+\item Merged state ids. The function \texttt{sum\_merged} in \path{src/py/btpdata/states.py} sums the components of \path{jammu_kashmir} and \path{dnh_dd}. It finds the components in the whole source. If one key (year, quarter or month) does not have all components, it stops with an error. The population, PhonePe and NPCI modules use it. The data files after this change are byte-identical to the data files before it.
+% Command: run the data modules before and after the change; cmp of each CSV in data/interim and data/final   (output: no difference)
+\item Beta window. \texttt{beta\_convergence} in \path{src/R/lib/descriptives_fns.R} calculates the window length in years from the period strings: (quarter index of the end $-$ quarter index of the start)$/4$. The constant 7.5 is removed. For 2018Q4 to 2026Q2 the value is 7.5, so the table does not change.
+% Command: Rscript -e 'source("src/R/lib/descriptives_fns.R"); print((quarter_index("2026Q2")-quarter_index("2018Q4"))/4)'   (output: 7.5)
+\item Raw-file check. \path{src/py/btpdata/check_raw.py} calculates the SHA-256 of each manual raw file and compares it with the \texttt{sha256} column of its manifest. If the values are different, it stops with a message that gives the file, the expected value and the actual value. The three manual raw files agree with their manifests.
+% Command: PYTHONPATH=src/py .venv/bin/python -m btpdata.check_raw   (output: raw inputs present; sha256 matches manifest)
+\item Report Figure 5.2 caption: the maps show all 35 units (28 states and 7 union territories as merged in the panel).
+\item Slides: the statement ``PhonePe has about 46\% of UPI volume'' is removed. The slides now give the measured ratio below.
+\end{itemize}
+
+\subsection{PhonePe Pulse count and NPCI volume}
+The ratio is the PhonePe Pulse transaction count of the 35 ids divided by the NPCI UPI volume. The NPCI volume is the sum of all rows without a district, with the unclassified row included.
+% Command: PYTHONPATH=src/py .venv/bin/python -c "import pandas as pd; from btpdata import npci; p=pd.read_csv('data/final/panel_quarterly.csv'); m=npci._load(npci.RAW)
+%   for q,ms in [('2025Q2',['2025-Apr','2025-May','2025-Jun']),('2026Q2',['2026-Apr','2026-May','2026-Jun'])]: v=sum(npci._number(r['volume_in_mn']) for k in ms for r in npci._state_rows(m[k]))*1e6; c=p[p.period==q].phonepe_count.sum(); print(q,c,v,round(c/v,3))"
+%   (output: 2025Q2 31134210599 54965890000 0.566; 2026Q2 38664285691 68588630000 0.564)
+\begin{itemize}
+\item 2025Q2: $3.113\times10^{10}$ PhonePe transactions, $5.497\times10^{10}$ NPCI UPI transactions, ratio 0.566.
+\item 2026Q2: $3.866\times10^{10}$ PhonePe transactions, $6.859\times10^{10}$ NPCI UPI transactions, ratio 0.564.
+\end{itemize}
+The data in this repository do not show which transactions the Pulse count includes. Open question: does the Pulse count include only UPI transactions, or also other payment instruments? Until this question has an answer, this report does not use the ratio as the PhonePe share of UPI volume.
 
 \section{Open items}
 \begin{itemize}
@@ -136,6 +195,7 @@ Telangana has 11.3\% of the PhonePe transaction amount. The amount is Rs.\ $5.13
 \item \path{singh2021eap}: ``verify authors' given names''.
 \end{itemize}
 % Command: grep -n "verify " references/refs.bib | grep -v "^[0-9]*:%"   (output: lines 16, 28, 39, 50)
+\item The coverage of the PhonePe Pulse transaction count (Section~\ref{sec:corrections}).
 \item The open items of Part 2 stay open.
 \end{itemize}
 
