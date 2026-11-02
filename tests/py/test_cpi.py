@@ -3,11 +3,12 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from btpdata.periods import quarters
 
-from btpdata.cpi import (MAX_GAP_MONTHS, MIN_COVERAGE, apply_fallback, build, fill_gaps, link_bases, overlap_factors,
-                         read_raw, to_quarterly)
+from btpdata.cpi import (MAX_GAP_MONTHS, MIN_COVERAGE, RAW, apply_fallback, build, fill_gaps, link_bases,
+                         overlap_factors, read_raw, to_quarterly)
 
 FIX = Path(__file__).parent / "fixtures" / "cpi" / "cpi_sample.json"
 
@@ -36,14 +37,49 @@ def test_link_no_jump():
     assert abs(s.cpi.iloc[-1] / 180.0 - 1) < 0.02
 
 
-def test_overlap_factors():
+def test_overlap_factors_use_december():
     months = [f"2025-{m:02d}" for m in range(1, 13)]
-    df = pd.concat([monthly("bihar", months, [200.0] * 12),
+    old = [200.0] * 11 + [210.0]
+    df = pd.concat([monthly("bihar", months, old),
                     monthly("bihar", months, [100.0] * 12, base="2024"),
                     monthly("goa", months, [190.0] * 12),
-                    monthly("goa", months, [95.0] * 12, base="2024")])
+                    monthly("goa", months, [95.0] * 11 + [100.0], base="2024")])
     f = overlap_factors(df)
-    assert f == {"bihar": 2.0, "goa": 2.0}
+    assert f == {"bihar": 2.1, "goa": 1.9}
+
+
+def test_overlap_factor_falls_back_to_latest_common_month(caplog):
+    months = [f"2025-{m:02d}" for m in range(1, 13)]
+    df = pd.concat([monthly("bihar", months[:10], [200.0] * 9 + [220.0]),
+                    monthly("bihar", months, [100.0] * 12, base="2024")])
+    with caplog.at_level("WARNING"):
+        f = overlap_factors(df)
+    assert f == {"bihar": 2.2}
+    assert "bihar" in caplog.text and "2025-10" in caplog.text
+
+
+def test_overlap_factor_no_common_month_raises():
+    df = pd.concat([monthly("bihar", ["2025-01", "2025-02"], [200.0, 201.0]),
+                    monthly("bihar", ["2025-11", "2025-12"], [100.0, 101.0], base="2024")])
+    with pytest.raises(ValueError, match="bihar"):
+        overlap_factors(df)
+
+
+@pytest.mark.skipif(not RAW.exists(), reason="raw CPI file absent")
+def test_real_link_keeps_base2024_dec_jan_change():
+    df = read_raw(RAW)
+    factors = overlap_factors(df)
+    linked = link_bases(df, factors).set_index(["state_id", "month"]).cpi
+    b24 = df[df.base == "2024"].set_index(["state_id", "month"]).cpi
+    checked = 0
+    for sid in factors:
+        if (sid, "2025-12") not in linked.index or (sid, "2026-01") not in linked.index:
+            continue
+        got = linked[sid, "2026-01"] / linked[sid, "2025-12"]
+        want = b24[sid, "2026-01"] / b24[sid, "2025-12"]
+        assert abs(got - want) < 1e-9, sid
+        checked += 1
+    assert checked >= 30
 
 
 def test_fixture_reads():

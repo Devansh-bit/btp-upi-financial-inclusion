@@ -1,10 +1,12 @@
 """State CPI (Combined, General) on base 2012=100, quarterly, in the interim long schema.
 
 Base 2012 (Jan 2017 - Dec 2025) is linked to base 2024 (Jan 2025 onward) with a per-state
-overlap factor f_s = mean(base 2012, 2025) / mean(base 2024, 2025). Base 2024 values enter
-from 2026-01 as index * f_s.
+factor f_s = base 2012 (2025-12) / base 2024 (2025-12), the last overlap month. Base 2024
+values enter from 2026-01 as index * f_s, so the Dec 2025 -> Jan 2026 change of the linked
+series equals the base 2024 change.
 """
 import json
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -16,6 +18,7 @@ from .states import ALL_IDS, normalise, to_state_id
 SOURCE = "mospi_cpi_2012linked"
 ALL_INDIA = "all_india"
 OVERLAP_YEAR = "2025"
+FACTOR_MONTH = "2025-12"  # last overlap month; the link factor uses this month
 LINK_MONTH = "2026-01"  # first month taken from base 2024
 MAX_GAP_MONTHS = 3
 MIN_COVERAGE = 0.9  # own series needs values for this share of the months, else all-India
@@ -26,6 +29,7 @@ _MONTHS = {m: i for i, m in enumerate(
     ["January", "February", "March", "April", "May", "June", "July", "August",
      "September", "October", "November", "December"], 1)}
 _DNH, _DAMAN = "dadra and nagar haveli", "daman and diu"
+log = logging.getLogger(__name__)
 
 
 def _larger_dnh_dd_component(path: Path = POPULATION) -> str:
@@ -66,13 +70,30 @@ def read_raw(path: Path) -> pd.DataFrame:
 
 
 def overlap_factors(df: pd.DataFrame) -> dict[str, float]:
-    """Per-state f_s = mean(base 2012) / mean(base 2024) over the months of OVERLAP_YEAR
-    present in both bases."""
+    """Per-state f_s = base 2012 / base 2024 in FACTOR_MONTH (Dec 2025).
+
+    A state without FACTOR_MONTH in both bases uses the latest month of OVERLAP_YEAR present
+    in both bases; a warning names the state and the month. A state with values in both bases
+    in OVERLAP_YEAR but no common month raises ValueError. A state with values in only one base
+    in OVERLAP_YEAR has nothing to link and gets no factor (warning)."""
     ov = df[df.month.str.startswith(OVERLAP_YEAR)]
-    wide = ov.pivot_table(index=["state_id", "month"], columns="base", values="cpi").dropna()
+    wide = ov.pivot_table(index=["state_id", "month"], columns="base", values="cpi")
+    wide = wide.reindex(columns=["2012", "2024"])
     out = {}
     for sid, g in wide.groupby(level="state_id"):
-        out[sid] = float(g["2012"].mean() / g["2024"].mean())
+        g = g.droplevel("state_id")
+        has = g.notna().any()
+        if not (has["2012"] and has["2024"]):
+            log.warning("cpi link: %s has %s OVERLAP_YEAR values in one base only; no factor",
+                        sid, OVERLAP_YEAR)
+            continue
+        both = g.dropna()
+        if both.empty:
+            raise ValueError(f"cpi link: {sid} has no {OVERLAP_YEAR} month in both bases")
+        month = FACTOR_MONTH if FACTOR_MONTH in both.index else both.index.max()
+        if month != FACTOR_MONTH:
+            log.warning("cpi link: %s lacks %s in a base; factor uses %s", sid, FACTOR_MONTH, month)
+        out[sid] = float(both.loc[month, "2012"] / both.loc[month, "2024"])
     return out
 
 
