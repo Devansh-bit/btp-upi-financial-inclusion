@@ -98,3 +98,12 @@ def test_quarter_sums_three_months():
 def test_partial_quarter_dropped():
     q = to_quarterly(monthly(["2025-04", "2025-05", "2025-06", "2025-07", "2025-08"]))
     assert q.period.tolist() == ["2025Q2"]
+
+
+def test_read_raw_missing_component_raises(tmp_path):
+    p = tmp_path / "npci.json"
+    p.write_text(json.dumps({"months": {
+        "2025-Apr": resp([("JAMMU AND KASHMIR", None, "88", "1"), ("LADAKH", None, "3", "1")]),
+        "2025-May": resp([("JAMMU AND KASHMIR", None, "90", "1")])}}))
+    with pytest.raises(ValueError, match=r"jammu_kashmir.*2025-05.*ladakh"):
+        read_raw(p)

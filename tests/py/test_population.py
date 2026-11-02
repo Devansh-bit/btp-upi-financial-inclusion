@@ -55,3 +55,11 @@ def test_real_file_complete():
     assert set(ALL_IDS) <= set(wide.columns)
     assert not wide[list(ALL_IDS)].isna().any().any()
     assert len(wide) == 34
+
+
+def test_merge_missing_component_raises(tmp_path):
+    p = tmp_path / "pop.csv"
+    p.write_text("raw_name,year,population_thousands\n"
+                 "jammu & kashmir,2018,900\nladakh,2018,100\njammu & kashmir,2019,910\n")
+    with pytest.raises(ValueError, match=r"jammu_kashmir.*2019.*ladakh"):
+        load_annual(p)

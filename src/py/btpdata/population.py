@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 from .periods import quarters
-from .states import to_state_id
+from .states import sum_merged
 
 SOURCE = "ncp2020_table8"
 
@@ -12,9 +12,8 @@ SOURCE = "ncp2020_table8"
 def load_annual(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path)
     df = df[df.raw_name.str.strip().str.lower() != "india"].copy()
-    df["state_id"] = df.raw_name.map(to_state_id)
     df["population"] = df.population_thousands * 1000.0
-    return (df.groupby(["state_id", "year"], as_index=False).population.sum()
+    return (sum_merged(df, "raw_name", ["year"], ["population"])
               .sort_values(["state_id", "year"]).reset_index(drop=True))
 
 

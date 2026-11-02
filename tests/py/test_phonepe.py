@@ -27,3 +27,19 @@ def test_parse_and_merge(tmp_path):
 def test_missing_quarter_fails(tmp_path):
     with pytest.raises(FileNotFoundError, match="2018/2.json"):
         build_interim(FIX, tmp_path / "p.csv", ["2018Q1", "2018Q2"])
+
+
+def test_missing_component_raises(tmp_path):
+    import json
+    import shutil
+    repo = tmp_path / "repo"
+    shutil.copytree(FIX, repo)
+    base = repo / "data/map/{}/hover/country/india/2018"
+    t = json.loads((Path(str(base).format("transaction")) / "1.json").read_text())
+    t["data"]["hoverDataList"] = [e for e in t["data"]["hoverDataList"] if e["name"] != "ladakh"]
+    (Path(str(base).format("transaction")) / "2.json").write_text(json.dumps(t))
+    u = json.loads((Path(str(base).format("user")) / "1.json").read_text())
+    del u["data"]["hoverData"]["ladakh"]
+    (Path(str(base).format("user")) / "2.json").write_text(json.dumps(u))
+    with pytest.raises(ValueError, match=r"jammu_kashmir.*2018Q2.*ladakh"):
+        build_interim(repo, tmp_path / "p.csv", ["2018Q1", "2018Q2"])

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .states import to_state_id
+from .states import sum_merged
 
 SOURCE = "npci_api"
 RAW = Path("data/raw/npci/npci_statewise_2025-04_2026-09.json")
@@ -49,19 +49,25 @@ def _strip_total(name: str) -> str:
     return name[: -len(_TOTAL)] if name.endswith(_TOTAL) else name
 
 
-def parse_month(response: dict, month: str) -> pd.DataFrame:
-    """One API response -> state_id, month, npci_volume (count), npci_value_inr (rupees)."""
+_VALUES = ["npci_volume", "npci_value_inr"]
+
+
+def _month_rows(response: dict, month: str) -> pd.DataFrame:
+    """One API response -> raw_name, month, npci_volume (count), npci_value_inr (rupees)."""
     rows = []
     for r in _state_rows(response):
         name = _strip_total(r["state_union_territory"])
         if _is_unattributed(name):
             continue
-        rows.append({"state_id": to_state_id(name), "month": month,
+        rows.append({"raw_name": name, "month": month,
                      "npci_volume": _number(r["volume_in_mn"]) * VOLUME_UNIT,
                      "npci_value_inr": _number(r["value_in_cr"]) * VALUE_UNIT})
-    cols = ["state_id", "month", "npci_volume", "npci_value_inr"]
-    df = pd.DataFrame(rows, columns=cols)
-    return df.groupby(["state_id", "month"], as_index=False).sum()
+    return pd.DataFrame(rows, columns=["raw_name", "month", *_VALUES])
+
+
+def parse_month(response: dict, month: str) -> pd.DataFrame:
+    """One API response -> state_id, month, npci_volume (count), npci_value_inr (rupees)."""
+    return sum_merged(_month_rows(response, month), "raw_name", ["month"], _VALUES)
 
 
 def unattributed_share(response: dict) -> tuple[float, float]:
@@ -88,8 +94,9 @@ def _load(path: Path) -> dict:
 
 
 def read_raw(path: Path) -> pd.DataFrame:
-    frames = [parse_month(resp, _month_id(key)) for key, resp in _load(path).items()]
-    return pd.concat(frames, ignore_index=True)
+    """All months; merged-id components are inferred from the whole file (sum_merged)."""
+    frames = [_month_rows(resp, _month_id(key)) for key, resp in _load(path).items()]
+    return sum_merged(pd.concat(frames, ignore_index=True), "raw_name", ["month"], _VALUES)
 
 
 def read_unattributed(path: Path) -> pd.DataFrame:

@@ -6,7 +6,7 @@ import pandas as pd
 
 from btpdata.fetch_phonepe import PHONEPE_COMMIT
 from btpdata.periods import quarters
-from btpdata.states import to_state_id
+from btpdata.states import sum_merged
 
 COLUMNS = ["state_id", "period", "variable", "value", "source"]
 SOURCE = f"phonepe@{PHONEPE_COMMIT[:7]}"
@@ -14,9 +14,10 @@ HOVER = "data/map/{kind}/hover/country/india/{year}/{q}.json"
 
 
 def _rows(items, period: str, variable: str) -> pd.DataFrame:
+    """Raw-name rows; build_interim maps names to state_id and sums merged ids."""
     return pd.DataFrame(
-        [(to_state_id(name), period, variable, value) for name, value in items],
-        columns=COLUMNS[:4],
+        [(name, period, variable, value) for name, value in items],
+        columns=["raw_name", "period", "variable", "value"],
     )
 
 
@@ -53,11 +54,7 @@ def build_interim(repo: Path, out: Path, periods: list[str]) -> pd.DataFrame:
         paths = {k: Path(repo) / HOVER.format(kind=k, year=year, q=q) for k in ("transaction", "user")}
         frames.append(parse_transactions(paths["transaction"], period))
         frames.append(parse_users(paths["user"], period))
-    df = (
-        pd.concat(frames, ignore_index=True)
-        .groupby(["state_id", "period", "variable"], as_index=False)["value"]
-        .sum()
-    )
+    df = sum_merged(pd.concat(frames, ignore_index=True), "raw_name", ["period", "variable"], ["value"])
     df["source"] = SOURCE
     df = df[COLUMNS]
     Path(out).parent.mkdir(parents=True, exist_ok=True)
