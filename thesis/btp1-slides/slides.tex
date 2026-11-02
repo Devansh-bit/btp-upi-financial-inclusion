@@ -86,7 +86,11 @@
 \item PhonePe Pulse commit \texttt{257bf38} \citep{phonepe_pulse}. % part1.tex
 \item Coverage: 2018Q1 to 2026Q2, 35 state ids. % part1.tex
 \item Three variables: transaction count, amount (Rs.), registered users. % part1.tex
-\item PhonePe has about 46\% of UPI volume. % spec Section 1
+% Command: PYTHONPATH=src/py .venv/bin/python -c "import pandas as pd; from btpdata import npci; p=pd.read_csv('data/final/panel_quarterly.csv'); m=npci._load(npci.RAW)
+%   for q,ms in [('2025Q2',['2025-Apr','2025-May','2025-Jun']),('2026Q2',['2026-Apr','2026-May','2026-Jun'])]: v=sum(npci._number(r['volume_in_mn']) for k in ms for r in npci._state_rows(m[k]))*1e6; c=p[p.period==q].phonepe_count.sum(); print(q,c,v,round(c/v,3))"
+%   (output: 2025Q2 31134210599 54965890000 0.566; 2026Q2 38664285691 68588630000 0.564)
+%   NPCI volume: all rows without a district, unclassified row included.
+\item PhonePe Pulse transaction count / NPCI UPI volume (all rows, unclassified included): 0.566 (2025Q2), 0.564 (2026Q2).
 \item Total transactions: 139.98 million in 2018Q1; 38,664.29 million in 2026Q2. % part1.tex Table
 \item Supervisor approval of the proxy is an open item. % part1.tex, part2.tex
 \end{itemize}
