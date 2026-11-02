@@ -84,7 +84,7 @@ def overlap_factors(df: pd.DataFrame) -> dict[str, float]:
         g = g.droplevel("state_id")
         has = g.notna().any()
         if not (has["2012"] and has["2024"]):
-            log.warning("cpi link: %s has %s OVERLAP_YEAR values in one base only; no factor",
+            log.warning("cpi link: %s has %s values in one base only; no factor",
                         sid, OVERLAP_YEAR)
             continue
         both = g.dropna()
