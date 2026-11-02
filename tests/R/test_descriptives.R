@@ -17,3 +17,14 @@ test_that("beta", {
     data.table(state_id = letters[1:5], period = "2026Q2", in_main_sample = TRUE, x = x1))
   expect_equal(unname(coef(beta_convergence(dts, "x"))[2]), -0.02, tolerance = 1e-9)
 })
+
+test_that("beta window length comes from the period strings", {
+  x0 <- c(1, 2, 4, 8, 16)
+  growth <- 0.1 - 0.02 * log(x0)
+  x1 <- exp(log(x0) + growth * 2)
+  dts <- rbind(
+    data.table(state_id = letters[1:5], period = "2019Q1", in_main_sample = TRUE, x = x0),
+    data.table(state_id = letters[1:5], period = "2021Q1", in_main_sample = TRUE, x = x1))
+  b <- coef(beta_convergence(dts, "x", start = "2019Q1", end = "2021Q1"))
+  expect_equal(unname(b), c(0.1, -0.02), tolerance = 1e-9)
+})
