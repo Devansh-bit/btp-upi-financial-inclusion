@@ -31,3 +31,4 @@ report:
 	cd thesis/btp1 && latexmk -pdf -interaction=nonstopmode main.tex
 	cd thesis/btp1-slides && latexmk -pdf -interaction=nonstopmode slides.tex
 	cd thesis/progress && for f in part*.tex; do latexmk -pdf -interaction=nonstopmode $$f || exit 1; done
+	cd thesis/study && for f in part*.tex; do latexmk -pdf -interaction=nonstopmode $$f || exit 1; done
