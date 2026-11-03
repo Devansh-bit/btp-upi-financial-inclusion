@@ -1,0 +1,36 @@
+state_id,name,code,in_main
+andaman_nicobar,Andaman and Nicobar Islands,AN,FALSE
+andhra_pradesh,Andhra Pradesh,AP,TRUE
+arunachal_pradesh,Arunachal Pradesh,AR,TRUE
+assam,Assam,AS,TRUE
+bihar,Bihar,BR,TRUE
+chandigarh,Chandigarh,CH,FALSE
+chhattisgarh,Chhattisgarh,CG,TRUE
+delhi,Delhi,DL,TRUE
+dnh_dd,Dadra and Nagar Haveli and Daman and Diu,DH,FALSE
+goa,Goa,GA,TRUE
+gujarat,Gujarat,GJ,TRUE
+haryana,Haryana,HR,TRUE
+himachal_pradesh,Himachal Pradesh,HP,TRUE
+jammu_kashmir,Jammu and Kashmir (with Ladakh),JK,TRUE
+jharkhand,Jharkhand,JH,TRUE
+karnataka,Karnataka,KA,TRUE
+kerala,Kerala,KL,TRUE
+lakshadweep,Lakshadweep,LD,FALSE
+madhya_pradesh,Madhya Pradesh,MP,TRUE
+maharashtra,Maharashtra,MH,TRUE
+manipur,Manipur,MN,TRUE
+meghalaya,Meghalaya,ML,TRUE
+mizoram,Mizoram,MZ,TRUE
+nagaland,Nagaland,NL,TRUE
+odisha,Odisha,OD,TRUE
+puducherry,Puducherry,PY,FALSE
+punjab,Punjab,PB,TRUE
+rajasthan,Rajasthan,RJ,TRUE
+sikkim,Sikkim,SK,TRUE
+tamil_nadu,Tamil Nadu,TN,TRUE
+telangana,Telangana,TS,TRUE
+tripura,Tripura,TR,TRUE
+uttar_pradesh,Uttar Pradesh,UP,TRUE
+uttarakhand,Uttarakhand,UK,TRUE
+west_bengal,West Bengal,WB,TRUE
