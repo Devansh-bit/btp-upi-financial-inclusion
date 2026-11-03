@@ -80,6 +80,8 @@
 \defval{nat.share.retail.min}{37.3}  % min share_retail, national(); data/interim/{phonepe,phonepe_types}.csv
 \defval{nat.share.retail.min_period}{2021Q2}  % period of min share_retail, national(); data/interim/{phonepe,phonepe_types}.csv
 \defval{nat.share.retail_above_p2p_from}{2021Q3}  % first period of the last run of share_retail > share_p2p, national(); data/interim/{phonepe,phonepe_types}.csv
+\defval{nat.share.gap.from}{2019Q4}  % start of the close-shares window; part1_study.R
+\defval{nat.share.gap.max_abs}{6.9}  % max |share_retail - share_p2p|, percentage points, gap.from to retail_above_p2p_from, national(); data/interim/{phonepe,phonepe_types}.csv
 \defval{nat.count.2020Q1}{1.63}  % national(); data/interim/phonepe.csv
 \defval{nat.count.2020Q2}{1.46}  % national(); data/interim/phonepe.csv
 \defval{nat.count.2020Q3}{2.05}  % national(); data/interim/phonepe.csv
@@ -199,8 +201,8 @@
 \defval{dec.intensity_first_above}{2019Q4}  % first period with intensity > reach, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{dec.intensity_above_from}{2021Q3}  % first period of the last run of intensity > reach, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{dec.n_var_r_rise}{0}  % quarters with var_r above the previous, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
-\defval{dec.var_y.max_late}{1.166}  % max var_y from intensity_above_from, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
-\defval{dec.var_y.max_late_period}{2023Q3}  % period of max var_y from intensity_above_from, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{dec.var_y.max_after2020}{1.166}  % max var_y 2021Q1-2026Q2, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{dec.var_y.max_after2020_period}{2023Q3}  % period of max var_y 2021Q1-2026Q2, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{dec.var_i.max}{0.493}  % max over quarters, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{dec.var_i.max_period}{2023Q3}  % period of max var_i, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{retail.cor.2026Q2}{0.625}  % spearman() share_retail vs count_pc 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv

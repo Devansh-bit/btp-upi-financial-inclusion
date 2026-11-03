@@ -196,6 +196,15 @@ below <- which(nat$share_retail <= nat$share_p2p)
 stopifnot(length(below) > 0L, max(below) < nrow(nat))
 add("nat.share.retail_above_p2p_from", nat$period[max(below) + 1L], NULL,
     paste0("first period of the last run of share_retail > share_p2p, ", SRC_NATT))
+# Window in which the retail and P2P shares are close: GAP_FROM to the first quarter of the last run
+# of share_retail > share_p2p. GAP_FROM is the first quarter after the large 2019 gaps (2019Q1 -15.9,
+# 2019Q3 +11.7 percentage points).
+GAP_FROM <- "2019Q4"
+gap_win <- nat[period >= GAP_FROM & period <= nat$period[max(below) + 1L]]
+gap_win[, gap := 100 * (share_retail - share_p2p)]
+add("nat.share.gap.from", GAP_FROM, NULL, "start of the close-shares window; part1_study.R")
+add("nat.share.gap.max_abs", max(abs(gap_win$gap)), 1,
+    paste0("max |share_retail - share_p2p|, percentage points, gap.from to retail_above_p2p_from, ", SRC_NATT))
 
 # national: the 2020 fall and the quarter-on-quarter series
 for (p in c("2020Q1", "2020Q2", "2020Q3"))
@@ -233,7 +242,10 @@ r <- ann_n[which.max(atv)]
 add("nat.ann.atv.max", r$atv, 0, paste0("max atv, ", SRC_ANN))
 add("nat.ann.atv.max_year", r$year, NULL, paste0("year of max atv, ", SRC_ANN))
 # Registered users added in each full calendar year after the first (year-end minus previous year-end).
-yr_full <- ann_n[grepl("^[0-9]{4}$", year)]
+# Full years: calendar years with four quarters in the national series.
+q_per_year <- nat[, .N, by = .(year = substr(period, 1, 4))]
+yr_full <- ann_n[year %in% q_per_year[N == 4L, year]]
+stopifnot(nrow(yr_full) >= 2L)
 users_added <- diff(yr_full$users) / 1e6
 add("nat.users_added.first_year", yr_full$year[2], NULL, paste0("first year of diff(users), ", SRC_ANN))
 add("nat.users_added.last_year", yr_full$year[nrow(yr_full)], NULL, paste0("last full year, ", SRC_ANN))
@@ -305,6 +317,7 @@ for (s in c("max", "min")) {
 # Rank of count_pc (1 = largest), 2018Q4 and 2026Q2; places moved up (positive) or down.
 rk <- data.table(name = d_last$name, r0 = rank(-d_ref0$count_pc), r1 = rank(-d_last$count_pc))
 rk[, up := r0 - r1]
+stopifnot(all(rk$up == round(rk$up)))   # no tied ranks (average ranks would give fractions)
 rise <- rk[up == max(up)]
 stopifnot(nrow(rise) == 1L)
 add("st.rank_rise.name", rise$name, NULL, paste0("largest r0 - r1, rank(-count_pc), ", SRC_MAIN))
@@ -319,6 +332,7 @@ add("st.n_rank_move_small", sum(abs(rk$up) <= RANK_MOVE), 0,
     paste0("ids with |r0 - r1| <= threshold, rank(-count_pc), ", SRC_MAIN))
 # Reach rank minus intensity rank in 2026Q2 (1 = largest).
 rg <- data.table(name = d_last$name, gap = rank(-d_last$users_per_1000) - rank(-d_last$intensity))
+stopifnot(all(rg$gap == round(rg$gap)))   # no tied ranks
 g_r <- rg[gap == min(gap)][order(name)]; g_i <- rg[gap == max(gap)][order(name)]
 add("st.ri_gap.reach.names", join_and(g_r$name), NULL,
     paste0("smallest reach rank - intensity rank 2026Q2, ", SRC_MAIN))
@@ -374,15 +388,15 @@ add("dec.intensity_first_above", dec[intensity > reach, period][1], NULL,
     paste0("first period with intensity > reach, ", SRC_DEC))
 # First quarter from which intensity > reach in every later quarter.
 dec_below <- which(dec$intensity <= dec$reach)
-stopifnot(max(dec_below) < nrow(dec))
+stopifnot(length(dec_below) > 0L, max(dec_below) < nrow(dec))
 dec_from <- dec$period[max(dec_below) + 1L]
 add("dec.intensity_above_from", dec_from, NULL,
     paste0("first period of the last run of intensity > reach, ", SRC_DEC))
 add("dec.n_var_r_rise", sum(diff(dec$var_r) > 0), 0, paste0("quarters with var_r above the previous, ", SRC_DEC))
-late <- dec[period >= dec_from]
-add("dec.var_y.max_late", max(late$var_y), 3, paste0("max var_y from intensity_above_from, ", SRC_DEC))
-add("dec.var_y.max_late_period", late[which.max(var_y), period], NULL,
-    paste0("period of max var_y from intensity_above_from, ", SRC_DEC))
+late <- dec[substr(period, 1, 4) > "2020"]
+add("dec.var_y.max_after2020", max(late$var_y), 3, paste0("max var_y 2021Q1-2026Q2, ", SRC_DEC))
+add("dec.var_y.max_after2020_period", late[which.max(var_y), period], NULL,
+    paste0("period of max var_y 2021Q1-2026Q2, ", SRC_DEC))
 add("dec.var_i.max", max(dec$var_i), 3, paste0("max over quarters, ", SRC_DEC))
 add("dec.var_i.max_period", dec[which.max(var_i), period], NULL, paste0("period of max var_i, ", SRC_DEC))
 
@@ -398,6 +412,103 @@ add("retail.cor.2018Q4", spearman(d_ref0$share_retail, d_ref0$count_pc), 3,
     paste0("spearman() share_retail vs count_pc 2018Q4, ", SRC_MAIN))
 add("retail.n_other_above", sum(at(P_LAST, other_ids)$share_retail > max(d_last$share_retail)), 0,
     paste0("other ids with share_retail 2026Q2 above the main-sample max, load_part1(); ", F_TYPES))
+
+# ---- guards: statements in the text of part1.tex that depend on the data ----
+# Each guard stops the build when a data change makes the sentence wrong. The comment names the
+# section of part1.tex and the statement.
+guard <- function(ok, what) if (!isTRUE(ok)) stop("text statement no longer true: ", what)
+nat_full <- ann_n[year %in% yr_full$year]
+g_ann <- setNames(nat_full$growth_count, nat_full$year)
+# 4.1
+guard(nat_at(P_LAST)$users / nat_at(P_REF0)$users < nat_at(P_LAST)$count / nat_at(P_REF0)$count &
+        nat_at(P_LAST)$amount / nat_at(P_REF0)$amount < nat_at(P_LAST)$count / nat_at(P_REF0)$count,
+      "4.1 count grows faster than the amount and the users, 2018Q4-2026Q2")
+guard(max(users_added) / min(users_added) < 1.2, "4.1 users added: almost the same size each year")
+inc <- diff(nat$count)
+guard(mean(inc[substr(nat$period[-1], 1, 4) <= "2020"]) < mean(inc[substr(nat$period[-1], 1, 4) >= "2021"]),
+      "4.1 count rises slowly up to 2020 and more steeply after 2021")
+guard(all(diff(nat_full$count) > 0), "4.1 the annual count increases in each full year")
+guard(g_ann[["2020"]] < g_ann[["2019"]] && g_ann[["2020"]] < g_ann[["2021"]],
+      "4.1 rate of 2020 lower than the rates of 2019 and 2021")
+guard(all(diff(g_ann[as.character(2021:2025)]) < 0), "4.1 after 2021 the rate decreases in each year")
+i_max <- which.max(ann_n$atv)
+guard(all(diff(ann_n$atv[i_max:nrow(ann_n)]) < 0), "4.1 annual average value decreases in each later year")
+# 4.2
+guard(identical(nat[!is.na(qoq_count) & qoq_count < 0, period], "2020Q2"),
+      "4.2 2020Q2 is the only quarter with a fall in the national count")
+guard(nat_at("2020Q2")$qoq_amount > nat_at("2020Q2")$qoq_count, "4.2 amount falls less than the count in 2020Q2")
+guard(nat_at("2020Q3")$count > nat_at("2020Q1")$count, "4.2 count of 2020Q3 more than the count of 2020Q1")
+guard(substr(nat[which.max(qoq_count), period], 1, 4) == "2018", "4.2 growth largest in the first quarters")
+guard(median(nat[period %in% last8, qoq_count]) < median(nat[period %in% first_q, qoq_count]),
+      "4.2 lower growth in the last eight quarters")
+guard(nrow(neg_amt) == 2L && neg_amt[1, period] == "2020Q2" && nat_at(neg_amt[2, period])$qoq_count >= 0,
+      "4.2 amount falls in two quarters; the count does not fall in the later one")
+# 4.3
+guard(nat_at("2020Q2")$atv > nat_at("2020Q1")$atv, "4.3 average value rises in 2020Q2")
+guard(nat_at(P_LAST)$atv < nat_at(P_FIRST)$atv, "4.3 average value of 2026Q2 lower than that of 2018Q1")
+guard(sp_atv[period == P_LAST, iqr] < sp_atv[period == P_REF0, iqr], "4.3 state values closer in 2026Q2 than in 2018Q4")
+from_rmin <- nat[period >= nat[which.min(share_retail), period]]
+guard(mean(diff(from_rmin$share_retail) > 0) > 0.5 && mean(diff(from_rmin$atv) < 0) > 0.5,
+      "4.3 from the retail minimum, the retail share rises and the average value falls in most quarters")
+# 4.4
+guard(nat[which.max(share_utility), period] == nat[which.min(share_retail), period],
+      "4.4 utility maximum and retail minimum in the same quarter")
+guard(nat[which.max(share_utility), period] %in% gap_win$period, "4.4 utility maximum inside the close-shares window")
+guard(sum(diff(sign(gap_win$gap)) != 0) >= 2L, "4.4 order of retail and P2P shares changes more than once")
+guard(all(nat[period >= nat$period[max(below) + 1L], share_retail > share_utility]),
+      "4.4 retail is the largest type from retail_above_p2p_from")
+guard(abs(nat_at(P_LAST)$share_retail - nat_at(P_FIRST)$share_retail) < 0.01,
+      "4.4 retail share of 2026Q2 close to that of 2018Q1 (within 1 percentage point)")
+# 5.1
+guard(all(d_last$count_pc > d_ref0$count_pc), "5.1 every main-sample state higher in 2026Q2 than in 2018Q4")
+top5 <- ord_last[1:5]; bot5 <- tail(ord_last, 5)
+guard(max(bot5$users_per_1000) < min(top5$users_per_1000) && max(bot5$intensity) < min(top5$intensity),
+      "5.1 bottom five: lower reach and intensity than each of the top five")
+# The eight states of the North Eastern Region (Ministry of Development of North Eastern Region).
+NORTH_EAST <- c("arunachal_pradesh", "assam", "manipur", "meghalaya", "mizoram", "nagaland", "sikkim",
+                "tripura")
+guard(all(bot5$state_id %in% NORTH_EAST), "5.1 the five lowest states are all in the north-east")
+guard(all(bot5$users_per_1000 < median(d_last$users_per_1000)) && all(bot5$intensity < median(d_last$intensity)),
+      "5.4 north-eastern states at the lower left: reach and intensity below the median")
+rr <- (max(d_last$amount_pc) / min(d_last$amount_pc)) / (max(d_last$count_pc) / min(d_last$count_pc))
+guard(rr > 0.75 && rr < 1 / 0.75, "5.1 amount and count max/min ratios of similar size")
+guard(sum(pop_top$count_pc < median(d_last$count_pc)) >= 1L, "5.1 a large state can have a low count per person")
+# 5.2
+cs <- function(q, v) conc[[q]][variable == v, share]
+guard(cs(P_REF0, "count") > cs(P_REF0, "population") && cs(P_LAST, "count") > cs(P_LAST, "population"),
+      "5.2 count share above population share in both quarters")
+guard(cs(P_LAST, "count") - cs(P_LAST, "population") > cs(P_REF0, "count") - cs(P_REF0, "population"),
+      "5.2 the difference is larger in 2026Q2")
+guard(abs(cs(P_LAST, "users") - cs(P_LAST, "population")) < abs(cs(P_LAST, "count") - cs(P_LAST, "users")),
+      "5.2 users share closer to the population share than to the count share")
+guard(!setequal(top_ids(dt, P_REF0, 5), top_ids(dt, P_LAST, 5)), "5.2 the set of five units changes")
+guard(n_half[[P_LAST]] < n_half[[P_REF0]] && cs(P_LAST, "count") > cs(P_REF0, "count"),
+      "5.2 count more concentrated at the end")
+# 5.3
+guard(pick(d_ref0, "count_pc", TRUE)$state_id %in% top5$state_id, "5.3 2018Q4 leader still in the top five")
+guard(nrow(fall_rk) > 1L, "5.3 plural verb after st.rank_fall.names")
+guard(sum(abs(rk$up) <= RANK_MOVE) > nrow(rk) / 2, "5.3 order changes little: most states move few places")
+# 5.4
+guard(nrow(g_r) > 1L && nrow(g_i) == 1L, "5.4 verbs after st.ri_gap.reach.names (plural) and .intensity.names")
+guard(max(d_last$intensity) / min(d_last$intensity) > max(d_last$users_per_1000) / min(d_last$users_per_1000) &&
+        dec[period == P_LAST, var_i] > dec[period == P_LAST, var_r], "5.4 states differ more in intensity than reach")
+ri_cor <- spearman(d_last$users_per_1000, d_last$intensity)
+guard(ri_cor > 0 && ri_cor < 0.7 && ri_cor > spearman(d_ref0$users_per_1000, d_ref0$intensity),
+      "5.4 reach and intensity go together, not closely; higher correlation in 2026Q2")
+# 5.5
+d0 <- dec[period == P_REF0]; d1 <- dec[period == P_LAST]
+guard(d0$reach > d0$intensity && d1$intensity > d1$reach, "5.5 reach larger in 2018Q4, intensity in 2026Q2")
+guard(all(diff(dec$var_r) < 0), "5.5 var(r) decreases in every quarter")
+guard(d1$var_i > d0$var_i && d1$cov_ri > d0$cov_ri, "5.5 var(i) and 2cov(r,i) increase")
+guard(late[which.max(var_y), period] == dec[which.max(var_i), period],
+      "5.5 largest var(y) after 2020 in the quarter of the largest var(i)")
+# 5.6
+guard(pick(d_last, "share_retail", FALSE)$state_id == pick(d_last, "count_pc", FALSE)$state_id,
+      "5.6 lowest retail share is in the state with the lowest count per person")
+rc0 <- spearman(d_ref0$share_retail, d_ref0$count_pc); rc1 <- spearman(d_last$share_retail, d_last$count_pc)
+guard(rc1 > 0 && sign(rc0) != sign(rc1), "5.6 positive in 2026Q2, opposite sign in 2018Q4")
+guard(sum(at(P_LAST, other_ids)$share_retail > max(d_last$share_retail)) > 1L,
+      "5.6 plural verb after retail.n_other_above")
 
 write_numbers(rbindlist(entries), file.path(OUT, "numbers.tex"),
               generator = "Rscript src/R/part1_study.R")
