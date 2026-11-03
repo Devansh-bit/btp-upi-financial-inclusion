@@ -25,6 +25,7 @@ data:
 
 analysis:
 	Rscript src/R/01_descriptives.R
+	Rscript src/R/part1_study.R
 
 report:
 	cd thesis/btp1 && latexmk -pdf -interaction=nonstopmode main.tex
