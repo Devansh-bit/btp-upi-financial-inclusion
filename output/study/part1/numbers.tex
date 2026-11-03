@@ -62,6 +62,8 @@
 \defval{nat.atv.peak}{1{,}907}  % max atv, national(); data/interim/phonepe.csv
 \defval{nat.atv.peak_period}{2020Q3}  % period of max atv, national(); data/interim/phonepe.csv
 \defval{nat.atv.2026Q2}{1{,}177}  % atv, national(); data/interim/phonepe.csv
+\defval{nat.atv.n_after_peak}{23}  % quarters after the max atv, national(); data/interim/phonepe.csv
+\defval{nat.atv.n_fall_after_peak}{17}  % quarters after the max atv with atv below the previous, national(); data/interim/phonepe.csv
 \defval{nat.share.p2p.2018Q1}{33.6}  % national(); data/interim/{phonepe,phonepe_types}.csv
 \defval{nat.share.retail.2018Q1}{64.2}  % national(); data/interim/{phonepe,phonepe_types}.csv
 \defval{nat.share.utility.2018Q1}{2.1}  % national(); data/interim/{phonepe,phonepe_types}.csv
@@ -73,6 +75,47 @@
 \defval{nat.share.utility.2026Q2}{5.4}  % national(); data/interim/{phonepe,phonepe_types}.csv
 \defval{nat.share.retail.min2018}{38.4}  % min share_retail 2018Q1-2018Q4, national(); data/interim/{phonepe,phonepe_types}.csv
 \defval{nat.share.retail.max2018}{64.2}  % max share_retail 2018Q1-2018Q4, national(); data/interim/{phonepe,phonepe_types}.csv
+\defval{nat.share.utility.max}{18.6}  % max share_utility, national(); data/interim/{phonepe,phonepe_types}.csv
+\defval{nat.share.utility.max_period}{2021Q2}  % period of max share_utility, national(); data/interim/{phonepe,phonepe_types}.csv
+\defval{nat.share.retail.min}{37.3}  % min share_retail, national(); data/interim/{phonepe,phonepe_types}.csv
+\defval{nat.share.retail.min_period}{2021Q2}  % period of min share_retail, national(); data/interim/{phonepe,phonepe_types}.csv
+\defval{nat.share.retail_above_p2p_from}{2021Q3}  % first period of the last run of share_retail > share_p2p, national(); data/interim/{phonepe,phonepe_types}.csv
+\defval{nat.count.2020Q1}{1.63}  % national(); data/interim/phonepe.csv
+\defval{nat.count.2020Q2}{1.46}  % national(); data/interim/phonepe.csv
+\defval{nat.count.2020Q3}{2.05}  % national(); data/interim/phonepe.csv
+\defval{nat.qoq.count.2020Q3}{40.3}  % qoq_count, national(); data/interim/phonepe.csv
+\defval{nat.qoq.count.max}{79.2}  % max qoq_count, national(); data/interim/phonepe.csv
+\defval{nat.qoq.count.max_period}{2018Q3}  % period of max qoq_count, national(); data/interim/phonepe.csv
+\defval{nat.qoq.count.median_first}{17.7}  % median qoq_count 2018Q2-2024Q2, national(); data/interim/phonepe.csv
+\defval{nat.n_qoq_neg_amount}{2}  % quarters with qoq_amount < 0, national(); data/interim/phonepe.csv
+\defval{nat.qoq_neg_amount.periods}{2020Q2 and 2025Q3}  % periods with qoq_amount < 0, national(); data/interim/phonepe.csv
+\defval{nat.qoq.amount.neg_last}{$-$0.7}  % qoq_amount in the last period with qoq_amount < 0, national(); data/interim/phonepe.csv
+\defval{nat.ann.growth.2019}{271.9}  % growth_count, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.growth.2020}{94.5}  % growth_count, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.growth.2021}{130.0}  % growth_count, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.growth.2022}{109.4}  % growth_count, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.growth.2023}{66.4}  % growth_count, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.growth.2024}{54.5}  % growth_count, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.growth.2025}{29.4}  % growth_count, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.count_pc.2018}{0.8}  % count_pc, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.count_pc.2025}{90.8}  % count_pc, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.count.2025}{128.54}  % count, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.amount.2025}{155.38}  % amount, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.atv.2025}{1{,}209}  % atv, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.atv.max}{1{,}827}  % max atv, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.ann.atv.max_year}{2020}  % year of max atv, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.users_added.first_year}{2019}  % first year of diff(users), annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.users_added.last_year}{2025}  % last full year, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.users_added.min}{76.9}  % min diff(year-end users), million, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{nat.users_added.max}{86.3}  % max diff(year-end users), million, annual(), national(); data/interim/{phonepe,population}.csv
+\defval{st.atv.median.2018Q4}{1{,}739}  % spread(atv), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.atv.iqr.2018Q4}{532}  % q3 - q1, spread(atv), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.atv.median.2026Q2}{1{,}154}  % spread(atv), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.atv.iqr.2026Q2}{156}  % q3 - q1, spread(atv), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.atv.median.max}{1{,}949}  % max median, spread(atv), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.atv.median.max_period}{2020Q4}  % period of max median, spread(atv), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.atv.iqr.max}{628}  % max q3 - q1, spread(atv), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.atv.iqr.max_period}{2021Q1}  % period of max q3 - q1, spread(atv), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{st.count_pc.max.name.2018Q4}{Delhi}  % main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{st.count_pc.max.2018Q4}{1.26}  % main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{st.count_pc.min.name.2018Q4}{Mizoram}  % main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
@@ -93,13 +136,52 @@
 \defval{st.intensity.min}{12.2}  % 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{st.rank_cor}{0.892}  % spearman() count_pc 2018Q4 vs 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{st.reach_intensity_cor}{0.600}  % spearman() users_per_1000 vs intensity 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.reach_intensity_cor.2018Q4}{0.309}  % spearman() users_per_1000 vs intensity 2018Q4, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.users_per_1000.maxmin}{4.0}  % max/min 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.intensity.maxmin}{8.7}  % max/min 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.count_pc.median.2018Q4}{0.22}  % median, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.n_above_nat.2018Q4}{10}  % ids with count_pc above national(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.count_pc.median.2026Q2}{18.78}  % median, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.n_above_nat.2026Q2}{9}  % ids with count_pc above national(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.count_pc.top5.names.2026Q2}{Telangana, Karnataka, Andhra Pradesh, Delhi and Maharashtra}  % 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.count_pc.bottom5.names.2026Q2}{Manipur, Mizoram, Tripura, Nagaland and Meghalaya}  % 2026Q2, lowest first, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.count_pc_rate.max.name}{Arunachal Pradesh}  % annual_rate() 2018Q4-2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.count_pc_rate.max}{98.4}  % annual_rate() 2018Q4-2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.count_pc_rate.min.name}{Manipur}  % annual_rate() 2018Q4-2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.count_pc_rate.min}{60.2}  % annual_rate() 2018Q4-2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.rank_rise.name}{Arunachal Pradesh}  % largest r0 - r1, rank(-count_pc), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.rank_rise.r0}{22}  % rank 2018Q4, rank(-count_pc), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.rank_rise.r1}{11}  % rank 2026Q2, rank(-count_pc), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.rank_fall.names}{Tamil Nadu and West Bengal}  % smallest r0 - r1, rank(-count_pc), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.rank_fall.places}{7}  % -(r0 - r1), rank(-count_pc), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.rank_move.threshold}{3}  % places; part1_study.R
+\defval{st.n_rank_move_small}{19}  % ids with |r0 - r1| <= threshold, rank(-count_pc), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.ri_gap.reach.names}{Goa and Kerala}  % smallest reach rank - intensity rank 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.ri_gap.reach.places}{12}  % intensity rank - reach rank 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.ri_gap.intensity.names}{Bihar}  % largest reach rank - intensity rank 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.ri_gap.intensity.places}{15}  % reach rank - intensity rank 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.amount_pc.max.name}{Telangana}  % 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.amount_pc.max}{132{,}629}  % amount_pc 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.amount_pc.min.name}{Mizoram}  % 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.amount_pc.min}{4{,}769}  % amount_pc 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.amount_pc.maxmin}{27.8}  % max/min 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.pop.top3.names}{Uttar Pradesh, Bihar and Maharashtra}  % largest population 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.pop.top3.n_below_median}{2}  % of st.pop.top3, count_pc below the median 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.atv.max.name}{Manipur}  % 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.atv.max}{1{,}623}  % atv 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.atv.min.name}{Assam}  % 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{st.atv.min}{946}  % atv 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{conc.top5.names.2018Q4}{Maharashtra, Karnataka, Uttar Pradesh, Andhra Pradesh and West Bengal}  % top_k(), 35 ids, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{conc.top5.count.2018Q4}{46.2}  % top_k(), 35 ids, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{conc.top5.population.2018Q4}{42.2}  % top_k(), 35 ids, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{conc.top5.amount.2018Q4}{44.1}  % top_k(), 35 ids, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{conc.top5.users.2018Q4}{43.7}  % top_k(), 35 ids, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{conc.n_half.2018Q4}{6}  % n_for_share(count, 0.5), 35 ids, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{conc.top5.names.2026Q2}{Maharashtra, Karnataka, Telangana, Uttar Pradesh and Andhra Pradesh}  % top_k(), 35 ids, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{conc.top5.count.2026Q2}{52.6}  % top_k(), 35 ids, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{conc.top5.population.2026Q2}{37.5}  % top_k(), 35 ids, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{conc.top5.amount.2026Q2}{53.7}  % top_k(), 35 ids, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{conc.top5.users.2026Q2}{41.9}  % top_k(), 35 ids, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{conc.n_half.2026Q2}{5}  % n_for_share(count, 0.5), 35 ids, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{dec.2018Q4.var_y}{0.595}  % decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{dec.2018Q4.var_r}{0.397}  % decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
@@ -113,8 +195,18 @@
 \defval{dec.2026Q2.intensity}{0.614}  % decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{dec.var_y.max}{1.255}  % max over quarters, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{dec.var_y.max_period}{2019Q4}  % period of max var_y, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{dec.2018Q1.reach}{0.954}  % decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{dec.intensity_first_above}{2019Q4}  % first period with intensity > reach, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{dec.intensity_above_from}{2021Q3}  % first period of the last run of intensity > reach, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{dec.n_var_r_rise}{0}  % quarters with var_r above the previous, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{dec.var_y.max_late}{1.166}  % max var_y from intensity_above_from, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{dec.var_y.max_late_period}{2023Q3}  % period of max var_y from intensity_above_from, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{dec.var_i.max}{0.493}  % max over quarters, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{dec.var_i.max_period}{2023Q3}  % period of max var_i, decompose(), main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{retail.cor.2026Q2}{0.625}  % spearman() share_retail vs count_pc 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{retail.max.name}{Delhi}  % 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{retail.max}{68.5}  % share_retail 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{retail.min.name}{Manipur}  % 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
 \defval{retail.min}{43.5}  % share_retail 2026Q2, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{retail.cor.2018Q4}{$-$0.527}  % spearman() share_retail vs count_pc 2018Q4, main sample, load_part1(); data/interim/{phonepe,phonepe_types,population}.csv
+\defval{retail.n_other_above}{3}  % other ids with share_retail 2026Q2 above the main-sample max, load_part1(); data/interim/phonepe_types.csv

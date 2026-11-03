@@ -175,12 +175,85 @@ atv_peak <- nat[which.max(atv)]
 add("nat.atv.peak", atv_peak$atv, 0, paste0("max atv, ", SRC_NAT))
 add("nat.atv.peak_period", atv_peak$period, NULL, paste0("period of max atv, ", SRC_NAT))
 add("nat.atv.2026Q2", nat_at(P_LAST)$atv, 0, paste0("atv, ", SRC_NAT))
+atv_after <- nat[period >= atv_peak$period, atv]
+add("nat.atv.n_after_peak", length(atv_after) - 1L, 0, paste0("quarters after the max atv, ", SRC_NAT))
+add("nat.atv.n_fall_after_peak", sum(diff(atv_after) < 0), 0,
+    paste0("quarters after the max atv with atv below the previous, ", SRC_NAT))
 SRC_NATT <- "national(); data/interim/{phonepe,phonepe_types}.csv"
 for (p in c(P_FIRST, P_REF0, P_LAST)) for (k in c("p2p", "retail", "utility"))
   add(sprintf("nat.share.%s.%s", k, p), 100 * nat_at(p)[[paste0("share_", k)]], 1, SRC_NATT)
 r18 <- 100 * nat[substr(period, 1, 4) == "2018", share_retail]
 add("nat.share.retail.min2018", min(r18), 1, paste0("min share_retail 2018Q1-2018Q4, ", SRC_NATT))
 add("nat.share.retail.max2018", max(r18), 1, paste0("max share_retail 2018Q1-2018Q4, ", SRC_NATT))
+r <- nat[which.max(share_utility)]
+add("nat.share.utility.max", 100 * r$share_utility, 1, paste0("max share_utility, ", SRC_NATT))
+add("nat.share.utility.max_period", r$period, NULL, paste0("period of max share_utility, ", SRC_NATT))
+r <- nat[which.min(share_retail)]
+add("nat.share.retail.min", 100 * r$share_retail, 1, paste0("min share_retail, ", SRC_NATT))
+add("nat.share.retail.min_period", r$period, NULL, paste0("period of min share_retail, ", SRC_NATT))
+# First quarter from which the retail share is above the P2P share in every later quarter.
+below <- which(nat$share_retail <= nat$share_p2p)
+stopifnot(length(below) > 0L, max(below) < nrow(nat))
+add("nat.share.retail_above_p2p_from", nat$period[max(below) + 1L], NULL,
+    paste0("first period of the last run of share_retail > share_p2p, ", SRC_NATT))
+
+# national: the 2020 fall and the quarter-on-quarter series
+for (p in c("2020Q1", "2020Q2", "2020Q3"))
+  add(sprintf("nat.count.%s", p), nat_at(p)$count / 1e9, 2, SRC_NAT)
+add("nat.qoq.count.2020Q3", nat_at("2020Q3")$qoq_count, 1, paste0("qoq_count, ", SRC_NAT))
+r <- nat[which.max(qoq_count)]
+add("nat.qoq.count.max", r$qoq_count, 1, paste0("max qoq_count, ", SRC_NAT))
+add("nat.qoq.count.max_period", r$period, NULL, paste0("period of max qoq_count, ", SRC_NAT))
+first_q <- setdiff(periods[-1], last8)
+stopifnot(identical(first_q[1], "2018Q2"), identical(first_q[length(first_q)], "2024Q2"))
+add("nat.qoq.count.median_first", median(nat[period %in% first_q, qoq_count]), 1,
+    paste0("median qoq_count 2018Q2-2024Q2, ", SRC_NAT))
+neg_amt <- nat[!is.na(qoq_amount) & qoq_amount < 0]
+add("nat.n_qoq_neg_amount", nrow(neg_amt), 0, paste0("quarters with qoq_amount < 0, ", SRC_NAT))
+add("nat.qoq_neg_amount.periods", join_and(neg_amt$period), NULL,
+    paste0("periods with qoq_amount < 0, ", SRC_NAT))
+add("nat.qoq.amount.neg_last", neg_amt[.N, qoq_amount], 1,
+    paste0("qoq_amount in the last period with qoq_amount < 0, ", SRC_NAT))
+
+# national: calendar years (annual(), the rows of national_annual.tex)
+SRC_ANN <- paste0("annual(), ", SRC_NATP)
+ann_n <- annual(nat)
+for (i in which(!is.na(ann_n$growth_count)))
+  add(sprintf("nat.ann.growth.%s", ann_n$year[i]), ann_n$growth_count[i], 1, paste0("growth_count, ", SRC_ANN))
+for (y in c("2018", "2025")) {
+  r <- ann_n[year == y]
+  stopifnot(nrow(r) == 1L)
+  add(sprintf("nat.ann.count_pc.%s", y), r$count_pc, 1, paste0("count_pc, ", SRC_ANN))
+}
+r <- ann_n[year == "2025"]
+add("nat.ann.count.2025", r$count / 1e9, 2, paste0("count, ", SRC_ANN))
+add("nat.ann.amount.2025", r$amount / 1e12, 2, paste0("amount, ", SRC_ANN))
+add("nat.ann.atv.2025", r$atv, 0, paste0("atv, ", SRC_ANN))
+r <- ann_n[which.max(atv)]
+add("nat.ann.atv.max", r$atv, 0, paste0("max atv, ", SRC_ANN))
+add("nat.ann.atv.max_year", r$year, NULL, paste0("year of max atv, ", SRC_ANN))
+# Registered users added in each full calendar year after the first (year-end minus previous year-end).
+yr_full <- ann_n[grepl("^[0-9]{4}$", year)]
+users_added <- diff(yr_full$users) / 1e6
+add("nat.users_added.first_year", yr_full$year[2], NULL, paste0("first year of diff(users), ", SRC_ANN))
+add("nat.users_added.last_year", yr_full$year[nrow(yr_full)], NULL, paste0("last full year, ", SRC_ANN))
+add("nat.users_added.min", min(users_added), 1, paste0("min diff(year-end users), million, ", SRC_ANN))
+add("nat.users_added.max", max(users_added), 1, paste0("max diff(year-end users), million, ", SRC_ANN))
+
+# average transaction value across states (spread(), main sample)
+SRC_ATV <- paste0("spread(atv), main sample, ", SRC_ALL)
+sp_atv <- spread(dt, "atv", main_ids)
+sp_atv[, iqr := q3 - q1]
+for (q in c(P_REF0, P_LAST)) {
+  add(sprintf("st.atv.median.%s", q), sp_atv[period == q, med], 0, SRC_ATV)
+  add(sprintf("st.atv.iqr.%s", q), sp_atv[period == q, iqr], 0, paste0("q3 - q1, ", SRC_ATV))
+}
+r <- sp_atv[which.max(med)]
+add("st.atv.median.max", r$med, 0, paste0("max median, ", SRC_ATV))
+add("st.atv.median.max_period", r$period, NULL, paste0("period of max median, ", SRC_ATV))
+r <- sp_atv[which.max(iqr)]
+add("st.atv.iqr.max", r$iqr, 0, paste0("max q3 - q1, ", SRC_ATV))
+add("st.atv.iqr.max_period", r$period, NULL, paste0("period of max q3 - q1, ", SRC_ATV))
 
 # states (main sample)
 SRC_MAIN <- paste0("main sample, ", SRC_ALL)
@@ -205,6 +278,70 @@ add("st.rank_cor", spearman(d_ref0$count_pc, d_last$count_pc), 3,
     paste0("spearman() count_pc 2018Q4 vs 2026Q2, ", SRC_MAIN))
 add("st.reach_intensity_cor", spearman(d_last$users_per_1000, d_last$intensity), 3,
     paste0("spearman() users_per_1000 vs intensity 2026Q2, ", SRC_MAIN))
+add("st.reach_intensity_cor.2018Q4", spearman(d_ref0$users_per_1000, d_ref0$intensity), 3,
+    paste0("spearman() users_per_1000 vs intensity 2018Q4, ", SRC_MAIN))
+# max/min ratios from unrounded values
+for (v in c("users_per_1000", "intensity"))
+  add(sprintf("st.%s.maxmin", v), max(d_last[[v]]) / min(d_last[[v]]), 1,
+      paste0("max/min 2026Q2, ", SRC_MAIN))
+for (q in c(P_REF0, P_LAST)) {
+  d <- at(q, main_ids)
+  add(sprintf("st.count_pc.median.%s", q), median(d$count_pc), 2, paste0("median, ", SRC_MAIN))
+  add(sprintf("st.n_above_nat.%s", q), sum(d$count_pc > nat_at(q)$count_pc), 0,
+      paste0("ids with count_pc above national(), ", SRC_MAIN))
+}
+ord_last <- d_last[order(-count_pc, state_id)]
+add("st.count_pc.top5.names.2026Q2", join_and(ord_last$name[1:5]), NULL, paste0("2026Q2, ", SRC_MAIN))
+add("st.count_pc.bottom5.names.2026Q2", join_and(rev(tail(ord_last$name, 5))), NULL,
+    paste0("2026Q2, lowest first, ", SRC_MAIN))
+# Annual rate of growth of count_pc per state, 2018Q4-2026Q2.
+st_rate <- data.table(state_id = d_last$state_id, name = d_last$name,
+                      rate = annual_rate(d_ref0$count_pc, d_last$count_pc, yrs))
+for (s in c("max", "min")) {
+  r <- pick(st_rate, "rate", s == "max")
+  add(sprintf("st.count_pc_rate.%s.name", s), r$name, NULL, paste0("annual_rate() 2018Q4-2026Q2, ", SRC_MAIN))
+  add(sprintf("st.count_pc_rate.%s", s), r$rate, 1, paste0("annual_rate() 2018Q4-2026Q2, ", SRC_MAIN))
+}
+# Rank of count_pc (1 = largest), 2018Q4 and 2026Q2; places moved up (positive) or down.
+rk <- data.table(name = d_last$name, r0 = rank(-d_ref0$count_pc), r1 = rank(-d_last$count_pc))
+rk[, up := r0 - r1]
+rise <- rk[up == max(up)]
+stopifnot(nrow(rise) == 1L)
+add("st.rank_rise.name", rise$name, NULL, paste0("largest r0 - r1, rank(-count_pc), ", SRC_MAIN))
+add("st.rank_rise.r0", rise$r0, 0, paste0("rank 2018Q4, rank(-count_pc), ", SRC_MAIN))
+add("st.rank_rise.r1", rise$r1, 0, paste0("rank 2026Q2, rank(-count_pc), ", SRC_MAIN))
+fall_rk <- rk[up == min(up)][order(name)]
+add("st.rank_fall.names", join_and(fall_rk$name), NULL, paste0("smallest r0 - r1, rank(-count_pc), ", SRC_MAIN))
+add("st.rank_fall.places", -min(rk$up), 0, paste0("-(r0 - r1), rank(-count_pc), ", SRC_MAIN))
+RANK_MOVE <- 3
+add("st.rank_move.threshold", RANK_MOVE, 0, "places; part1_study.R")
+add("st.n_rank_move_small", sum(abs(rk$up) <= RANK_MOVE), 0,
+    paste0("ids with |r0 - r1| <= threshold, rank(-count_pc), ", SRC_MAIN))
+# Reach rank minus intensity rank in 2026Q2 (1 = largest).
+rg <- data.table(name = d_last$name, gap = rank(-d_last$users_per_1000) - rank(-d_last$intensity))
+g_r <- rg[gap == min(gap)][order(name)]; g_i <- rg[gap == max(gap)][order(name)]
+add("st.ri_gap.reach.names", join_and(g_r$name), NULL,
+    paste0("smallest reach rank - intensity rank 2026Q2, ", SRC_MAIN))
+add("st.ri_gap.reach.places", -min(rg$gap), 0, paste0("intensity rank - reach rank 2026Q2, ", SRC_MAIN))
+add("st.ri_gap.intensity.names", join_and(g_i$name), NULL,
+    paste0("largest reach rank - intensity rank 2026Q2, ", SRC_MAIN))
+add("st.ri_gap.intensity.places", max(rg$gap), 0, paste0("reach rank - intensity rank 2026Q2, ", SRC_MAIN))
+for (s in c("max", "min")) {
+  r <- pick(d_last, "amount_pc", s == "max")
+  add(sprintf("st.amount_pc.%s.name", s), r$name, NULL, paste0("2026Q2, ", SRC_MAIN))
+  add(sprintf("st.amount_pc.%s", s), r$amount_pc, 0, paste0("amount_pc 2026Q2, ", SRC_MAIN))
+}
+add("st.amount_pc.maxmin", max(d_last$amount_pc) / min(d_last$amount_pc), 1,
+    paste0("max/min 2026Q2, ", SRC_MAIN))
+pop_top <- d_last[order(-population, state_id)][1:3]
+add("st.pop.top3.names", join_and(pop_top$name), NULL, paste0("largest population 2026Q2, ", SRC_MAIN))
+add("st.pop.top3.n_below_median", sum(pop_top$count_pc < median(d_last$count_pc)), 0,
+    paste0("of st.pop.top3, count_pc below the median 2026Q2, ", SRC_MAIN))
+for (s in c("max", "min")) {
+  r <- pick(d_last, "atv", s == "max")
+  add(sprintf("st.atv.%s.name", s), r$name, NULL, paste0("2026Q2, ", SRC_MAIN))
+  add(sprintf("st.atv.%s", s), r$atv, 0, paste0("atv 2026Q2, ", SRC_MAIN))
+}
 
 # concentration (35 ids)
 SRC_CONC <- paste0("top_k(), 35 ids, ", SRC_ALL)
@@ -215,6 +352,8 @@ for (q in c(P_REF0, P_LAST)) {
   add(sprintf("conc.top5.names.%s", q), join_and(name_of(top_ids(dt, q, 5))), NULL, SRC_CONC)
   add(sprintf("conc.top5.count.%s", q), conc[[q]][variable == "count", share], 1, SRC_CONC)
   add(sprintf("conc.top5.population.%s", q), conc[[q]][variable == "population", share], 1, SRC_CONC)
+  add(sprintf("conc.top5.amount.%s", q), conc[[q]][variable == "amount", share], 1, SRC_CONC)
+  add(sprintf("conc.top5.users.%s", q), conc[[q]][variable == "users", share], 1, SRC_CONC)
   n_half[[q]] <- n_for_share(d$count, 0.5)
   add(sprintf("conc.n_half.%s", q), n_half[[q]], 0, paste0("n_for_share(count, 0.5), 35 ids, ", SRC_ALL))
 }
@@ -230,6 +369,22 @@ for (q in c(P_REF0, P_LAST)) {
 add("dec.var_y.max", max(dec$var_y), 3, paste0("max over quarters, ", SRC_DEC))
 add("dec.var_y.max_period", dec[which.max(var_y), period], NULL,
     paste0("period of max var_y, ", SRC_DEC))
+add("dec.2018Q1.reach", dec[period == P_FIRST, reach], 3, SRC_DEC)
+add("dec.intensity_first_above", dec[intensity > reach, period][1], NULL,
+    paste0("first period with intensity > reach, ", SRC_DEC))
+# First quarter from which intensity > reach in every later quarter.
+dec_below <- which(dec$intensity <= dec$reach)
+stopifnot(max(dec_below) < nrow(dec))
+dec_from <- dec$period[max(dec_below) + 1L]
+add("dec.intensity_above_from", dec_from, NULL,
+    paste0("first period of the last run of intensity > reach, ", SRC_DEC))
+add("dec.n_var_r_rise", sum(diff(dec$var_r) > 0), 0, paste0("quarters with var_r above the previous, ", SRC_DEC))
+late <- dec[period >= dec_from]
+add("dec.var_y.max_late", max(late$var_y), 3, paste0("max var_y from intensity_above_from, ", SRC_DEC))
+add("dec.var_y.max_late_period", late[which.max(var_y), period], NULL,
+    paste0("period of max var_y from intensity_above_from, ", SRC_DEC))
+add("dec.var_i.max", max(dec$var_i), 3, paste0("max over quarters, ", SRC_DEC))
+add("dec.var_i.max_period", dec[which.max(var_i), period], NULL, paste0("period of max var_i, ", SRC_DEC))
 
 # retail share (main sample, 2026Q2)
 add("retail.cor.2026Q2", spearman(d_last$share_retail, d_last$count_pc), 3,
@@ -239,6 +394,10 @@ for (s in c("max", "min")) {
   add(sprintf("retail.%s.name", s), r$name, NULL, paste0("2026Q2, ", SRC_MAIN))
   add(sprintf("retail.%s", s), 100 * r$share_retail, 1, paste0("share_retail 2026Q2, ", SRC_MAIN))
 }
+add("retail.cor.2018Q4", spearman(d_ref0$share_retail, d_ref0$count_pc), 3,
+    paste0("spearman() share_retail vs count_pc 2018Q4, ", SRC_MAIN))
+add("retail.n_other_above", sum(at(P_LAST, other_ids)$share_retail > max(d_last$share_retail)), 0,
+    paste0("other ids with share_retail 2026Q2 above the main-sample max, load_part1(); ", F_TYPES))
 
 write_numbers(rbindlist(entries), file.path(OUT, "numbers.tex"),
               generator = "Rscript src/R/part1_study.R")

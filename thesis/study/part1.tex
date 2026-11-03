@@ -36,7 +36,7 @@
 \maketitle
 
 \begin{abstract}
-% Data, method and four to six main numbers.
+This study builds a state-quarter panel of digital payment adoption in India. NPCI publishes UPI data by state only from April 2025. Thus the panel uses PhonePe Pulse, the open data of a UPI payment app, at one fixed commit. The panel has \val{data.n_ids} state units and \val{data.n_quarters} quarters, from 2018Q1 to 2026Q2. It gives the transaction count, the amount, the registered users and the count by type. The denominator is the quarterly population from a linear interpolation of the NCP 2020 projections. All checks between the files of the source pass, and all values are nominal. The national count increases from \val{nat.count.2018Q4} billion transactions in 2018Q4 to \val{nat.count.2026Q2} billion in 2026Q2, an annual rate of \val{nat.count_rate} percent. The average transaction value rises to Rs.~\val{nat.atv.peak} in \val{nat.atv.peak_period} and falls to Rs.~\val{nat.atv.2026Q2} in 2026Q2. In the same years, the retail share of the count increases to \val{nat.share.retail.2026Q2} percent. Across the \val{data.n_main} states of the main sample, the count per person in 2026Q2 goes from \val{st.count_pc.min.2026Q2} to \val{st.count_pc.max.2026Q2} transactions per quarter. The Spearman rank correlation of the state values in 2018Q4 and 2026Q2 is \val{st.rank_cor}. A variance decomposition divides the differences between states into reach and intensity. Reach gives the larger contribution in 2018Q4 (\val{dec.2018Q4.reach}), and intensity gives the larger contribution in 2026Q2 (\val{dec.2026Q2.intensity}).
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
@@ -220,16 +220,26 @@ Count per person is the product of reach and intensity: $C/P = (U/P)\,(C/U)$. Le
 The first term is the contribution of reach, and the second term is the contribution of intensity. Each term is the slope of a least-squares line of $r$ (or $i$) on $y$ across the states. The reach term gives the part of the differences in adoption between states that goes with differences in reach. The intensity term gives the part that goes with differences in use per user. A term can be negative, and the other term is then larger than $1$. The decomposition shows how the differences divide between reach and intensity. It does not show a cause. Section~\ref{sec:states} gives the results for each quarter.
 
 \section{Adoption in India as a whole}\label{sec:national}
-% National count, amount and users; annual totals; quarter-on-quarter growth; average transaction value; type shares.
+This section describes the national series. The national value of a variable is the sum over the \val{data.n_ids} state ids. Section~\ref{sec:checks} shows that this sum equals the national files of PhonePe Pulse in each quarter. All amounts are nominal. Section~\ref{sec:totals} gives the totals and their growth (Figure~\ref{fig:national_totals} and Table~\ref{tab:annual}). Section~\ref{sec:qoq} gives the growth from quarter to quarter (Figure~\ref{fig:national_growth}). Section~\ref{sec:avg_value} gives the average transaction value (Figure~\ref{fig:avg_value}). Section~\ref{sec:types} gives the shares of the transaction types (Figure~\ref{fig:type_shares}).
 
-\subsection{Totals and growth}
-% National count, amount and users (Figure~\ref{fig:national_totals}) and annual totals (Table~\ref{tab:annual}).
+\subsection{Totals and growth}\label{sec:totals}
+Figure~\ref{fig:national_totals} shows the three national totals in each quarter: the transaction count, the amount and the registered users. Each panel has its own vertical scale, and each scale starts at zero.
 
 \begin{figure}[tbp]
 \centering
 \includegraphics[width=\textwidth]{national_totals.pdf}
 \caption{National transaction count (billion), transaction amount (Rs.\ lakh crore) and registered users (million), by quarter. Unit: national total of all \val{data.n_ids} state units. Period: 2018Q1--2026Q2. Source: \citet{phonepe_pulse}.}\label{fig:national_totals}
 \end{figure}
+
+The count increases from \val{nat.count.2018Q1} billion transactions in 2018Q1 to \val{nat.count.2026Q2} billion in 2026Q2. Thus the count of 2026Q2 is \val{nat.count_ratio} times the count of 2018Q1. The amount increases from Rs.~\val{nat.amount.2018Q1} lakh crore to Rs.~\val{nat.amount.2026Q2} lakh crore, a ratio of \val{nat.amount_ratio}. The registered users increase from \val{nat.users.2018Q1} million to \val{nat.users.2026Q2} million, a ratio of \val{nat.users_ratio}.
+
+These ratios start from the small values of 2018Q1. Section~\ref{sec:measures} gives the reasons to measure growth from 2018Q4. From 2018Q4 to 2026Q2, the annual rate of growth is \val{nat.count_rate} percent for the count and \val{nat.amount_rate} percent for the amount. The annual rate for the registered users is \val{nat.users_rate} percent. The count grows faster than the amount, so the average value of a transaction decreases between the two quarters (Section~\ref{sec:avg_value}). The users grow more slowly than the count, so the number of transactions per user increases.
+
+The shape of the user curve differs from the shapes of the other two curves. The user curve is almost a straight line. Each full year from \val{nat.users_added.first_year} to \val{nat.users_added.last_year} adds between \val{nat.users_added.min} and \val{nat.users_added.max} million registered users. An increase of almost the same size each year gives a rate of growth that decreases over time. The count and the amount curves rise slowly up to 2020 and more steeply after 2021.
+
+Per person, the count increases from \val{nat.count_pc.2018Q1} transactions per person per quarter in 2018Q1 to \val{nat.count_pc.2018Q4} in 2018Q4. In 2026Q2, it is \val{nat.count_pc.2026Q2}. The registered users per 1000 persons increase from \val{nat.users_per_1000.2018Q1} in 2018Q1 to \val{nat.users_per_1000.2018Q4} in 2018Q4 and \val{nat.users_per_1000.2026Q2} in 2026Q2. This last value is not the share of persons who use PhonePe. The user count is a cumulative count of registrations, so it can include registrations that are no longer in use. The data also do not show whether one person can have more than one registration.
+
+Table~\ref{tab:annual} gives the national values for each calendar year. The count and the amount are sums over the quarters of the year. The users are the value at the end of the year. The count per person is the annual count divided by the mean population of the quarters of the year. The year 2026 has only two quarters, so the table gives no growth rate for it.
 
 \begin{table}[tbp]
 \centering
@@ -238,8 +248,12 @@ The first term is the contribution of reach, and the second term is the contribu
 \input{../../output/study/part1/tables/national_annual.tex}
 \end{table}
 
-\subsection{Quarter-on-quarter growth}
-% Growth of the count from quarter to quarter; 2020Q2 is the only quarter with a fall (Figure~\ref{fig:national_growth}).
+The annual count increases in each year. Its rate of growth is \val{nat.ann.growth.2019} percent in 2019, \val{nat.ann.growth.2020} percent in 2020 and \val{nat.ann.growth.2021} percent in 2021. The rate of 2020 is thus lower than the rates of the years before and after it. The only fall of the national count, in 2020Q2, is in this year (Section~\ref{sec:qoq}). After 2021, the rate decreases in each year. It is \val{nat.ann.growth.2022} percent in 2022, \val{nat.ann.growth.2023} percent in 2023, \val{nat.ann.growth.2024} percent in 2024 and \val{nat.ann.growth.2025} percent in 2025.
+
+The count per person increases from \val{nat.ann.count_pc.2018} transactions per person in 2018 to \val{nat.ann.count_pc.2025} in 2025. In 2025, the app records \val{nat.ann.count.2025} billion transactions with a total value of Rs.~\val{nat.ann.amount.2025} lakh crore. The annual average value is largest in \val{nat.ann.atv.max_year}, at Rs.~\val{nat.ann.atv.max}. It decreases in each later year, and it is Rs.~\val{nat.ann.atv.2025} in 2025.
+
+\subsection{Quarter-on-quarter growth}\label{sec:qoq}
+Figure~\ref{fig:national_growth} shows the change of the national count and of the national amount from the previous quarter, in percent. A bar below zero shows a quarter with a fall.
 
 \begin{figure}[tbp]
 \centering
@@ -247,8 +261,16 @@ The first term is the contribution of reach, and the second term is the contribu
 \caption{Quarter-on-quarter growth of the national transaction count and amount. Unit: percent change from the previous quarter. Sample: national total of all \val{data.n_ids} state units. Period: 2018Q2--2026Q2. Source: \citet{phonepe_pulse}.}\label{fig:national_growth}
 \end{figure}
 
-\subsection{Average transaction value}
-% National average value and the median and interquartile range across states (Figure~\ref{fig:avg_value}).
+The growth of the count is largest in the first quarters, when the base is small. The largest value is \val{nat.qoq.count.max} percent, in \val{nat.qoq.count.max_period}. From 2018Q2 to 2024Q2, the median growth of the count is \val{nat.qoq.count.median_first} percent per quarter. In the last eight quarters, from 2024Q3 to 2026Q2, the median is \val{nat.qoq.count.median_last8} percent per quarter. Thus the count still grows in each recent quarter, but at a lower rate.
+
+The only quarter with a fall in the national count is 2020Q2, the quarter from April to June 2020. The change of the count in this quarter is \val{nat.qoq.count.2020Q2} percent. The count goes from \val{nat.count.2020Q1} billion in 2020Q1 to \val{nat.count.2020Q2} billion in 2020Q2. The change of the amount is \val{nat.qoq.amount.2020Q2} percent, so the amount falls less than the count. The count falls in \val{nat.n_states_fall.2020Q2} of the \val{data.n_ids} state ids. In the other ids, the count of 2020Q2 is equal to or higher than the count of 2020Q1.
+
+The fall does not continue. In 2020Q3, the count grows by \val{nat.qoq.count.2020Q3} percent to \val{nat.count.2020Q3} billion, which is more than the count of 2020Q1. The data of this study do not show the cause of the fall in 2020Q2.
+
+The amount falls in the quarters \val{nat.qoq_neg_amount.periods}. The fall in the later quarter is small: the change is \val{nat.qoq.amount.neg_last} percent. The count does not fall in that quarter, so the average value of a transaction decreases.
+
+\subsection{Average transaction value}\label{sec:avg_value}
+The average transaction value is the amount divided by the count. Figure~\ref{fig:avg_value} shows it for India and for the states of the main sample. The national line is the national amount divided by the national count. The state line is the median of the \val{data.n_main} state values in each quarter. The band goes from the first to the third quartile of the state values.
 
 \begin{figure}[tbp]
 \centering
@@ -256,8 +278,16 @@ The first term is the contribution of reach, and the second term is the contribu
 \caption{Average transaction value. Unit: Rs.\ per transaction (nominal), amount divided by count. Sample: national value, and median and interquartile range across the \val{data.n_main} main-sample states. Period: 2018Q1--2026Q2. Source: \citet{phonepe_pulse}.}\label{fig:avg_value}
 \end{figure}
 
-\subsection{Transaction types}
-% National shares of P2P, Retail and Utility transactions (Figure~\ref{fig:type_shares}).
+The national value is Rs.~\val{nat.atv.2018Q1} in 2018Q1. It rises, with large changes from quarter to quarter, to a peak of Rs.~\val{nat.atv.peak} in \val{nat.atv.peak_period}. After the peak, it is lower than in the previous quarter in \val{nat.atv.n_fall_after_peak} of \val{nat.atv.n_after_peak} quarters. In 2026Q2, it is Rs.~\val{nat.atv.2026Q2}, which is lower than the value of 2018Q1. In 2020Q2, the count falls more than the amount (Section~\ref{sec:qoq}), so the average value rises in that quarter.
+
+The national value is a mean of the state values with the count of each state as its weight. The state median gives each state the same weight. The two lines thus differ, but they have a similar shape. The median has its largest value, Rs.~\val{st.atv.median.max}, in \val{st.atv.median.max_period}. In 2026Q2, the median is Rs.~\val{st.atv.median.2026Q2}.
+
+The width of the band shows how much the states differ. The interquartile range is Rs.~\val{st.atv.iqr.2018Q4} in 2018Q4. It has its largest value, Rs.~\val{st.atv.iqr.max}, in \val{st.atv.iqr.max_period}. After that quarter, it decreases with some rises, and it is Rs.~\val{st.atv.iqr.2026Q2} in 2026Q2. Thus the average values of the states are closer to each other in 2026Q2 than in 2018Q4. In 2026Q2, the highest value in the main sample is Rs.~\val{st.atv.max}, in \val{st.atv.max.name}. The lowest is Rs.~\val{st.atv.min}, in \val{st.atv.min.name} (Table~\ref{tab:states}).
+
+The fall of the average value and the rise of the retail share occur in the same years. From \val{nat.share.retail.min_period}, the retail share rises in most quarters (Section~\ref{sec:types}), and the average value falls. This pattern is consistent with a larger number of small payments to merchants. The study does not test this explanation. The type files give counts and no amounts, so the study cannot compute the average value of each type. The values are also nominal. Thus the study does not separate a change in prices from a change in the size of payments.
+
+\subsection{Transaction types}\label{sec:types}
+Figure~\ref{fig:type_shares} shows the national shares of the three types in the count: P2P, Retail and Utility. In each quarter, the three shares add up to the whole count.
 
 \begin{figure}[tbp]
 \centering
@@ -265,11 +295,19 @@ The first term is the contribution of reach, and the second term is the contribu
 \caption{National shares of the transaction count by type: P2P, Retail and Utility. Unit: percent of the national count. Sample: national total of all \val{data.n_ids} state units. Period: 2018Q1--2026Q2. Source: \citet{phonepe_pulse}.}\label{fig:type_shares}
 \end{figure}
 
-\section{Adoption across states}\label{sec:states}
-% Count per person by state; the 2026Q2 table; concentration; rank persistence; reach and intensity; the variance decomposition; the retail share.
+The shares change by large amounts in 2018. In 2018Q1, the retail share is \val{nat.share.retail.2018Q1} percent and the P2P share is \val{nat.share.p2p.2018Q1} percent. During 2018, the retail share moves between \val{nat.share.retail.min2018} and \val{nat.share.retail.max2018} percent. In 2018Q4, the retail share is \val{nat.share.retail.2018Q4} percent, the P2P share is \val{nat.share.p2p.2018Q4} percent and the utility share is \val{nat.share.utility.2018Q4} percent. The data do not show the reason for these changes (Section~\ref{sec:limits}).
 
-\subsection{Transactions per person}
-% Count per person by state in 2018Q4 and 2026Q2 (Figure~\ref{fig:state_count_pc}) and the 2026Q2 values (Table~\ref{tab:states}).
+From 2019 to the middle of 2021, the retail and P2P shares are close to each other, and their order changes more than once. The utility share rises in the same years. It has its largest value, \val{nat.share.utility.max} percent, in \val{nat.share.utility.max_period}. In the same quarter, the retail share has its lowest value, \val{nat.share.retail.min} percent.
+
+From \val{nat.share.retail_above_p2p_from}, the retail share is above the P2P share in every quarter. The retail share rises to \val{nat.share.retail.2026Q2} percent in 2026Q2, and the P2P share falls to \val{nat.share.p2p.2026Q2} percent. The utility share falls from its peak to \val{nat.share.utility.2026Q2} percent. Thus, in the recent quarters, payments to merchants are the largest type in the count. The retail share of 2026Q2 is close to that of 2018Q1, but the count is \val{nat.count_ratio} times larger.
+
+The type shares are shares of the count, not of the amount. A payment to a merchant and a transfer to a person each count as one transaction. The data do not show which type has the larger payments. Thus the type shares do not show how the value of all payments divides between the types.
+
+\section{Adoption across states}\label{sec:states}
+This section compares the states. Statistics across states use the \val{data.n_main} states of the main sample. The figures and Table~\ref{tab:states} also show the \val{data.n_other_ut} other union territories. The reference quarters are 2018Q4 and 2026Q2. Section~\ref{sec:count_pc} compares the count per person (Figure~\ref{fig:state_count_pc} and Table~\ref{tab:states}). Section~\ref{sec:concentration} measures the concentration of activity in a few states (Table~\ref{tab:concentration}). Section~\ref{sec:persistence} measures how stable the order of the states is. Sections~\ref{sec:reach} and~\ref{sec:decomposition} divide the count per person into reach and intensity (Figures~\ref{fig:reach_intensity} and~\ref{fig:decomposition}, Table~\ref{tab:decomposition}). Section~\ref{sec:retail} compares the retail share with the count per person (Figure~\ref{fig:retail_share}).
+
+\subsection{Transactions per person}\label{sec:count_pc}
+Figure~\ref{fig:state_count_pc} shows the count per person of each state unit in 2018Q4 and in 2026Q2. The horizontal axis has a log scale, so equal distances show equal ratios. The open circle gives the value of 2018Q4, and the filled circle gives the value of 2026Q2. The units are in the order of their values in 2026Q2. Grey names mark the other union territories.
 
 \begin{figure}[tbp]
 \centering
@@ -277,15 +315,29 @@ The first term is the contribution of reach, and the second term is the contribu
 \caption{Transaction count per person per quarter, by state unit, in 2018Q4 and 2026Q2. Unit: transactions per person per quarter. Sample: all \val{data.n_ids} state units; the other union territories are marked. Source: \citet{phonepe_pulse}; population from \citet{ncp2020}.}\label{fig:state_count_pc}
 \end{figure}
 
+In 2018Q4, the count per person in the main sample goes from \val{st.count_pc.min.2018Q4} transactions per person per quarter, in \val{st.count_pc.min.name.2018Q4}, to \val{st.count_pc.max.2018Q4}, in \val{st.count_pc.max.name.2018Q4}. The ratio of the highest to the lowest value is \val{st.count_pc.maxmin.2018Q4}. This ratio uses the unrounded values, so it differs from the ratio of the two rounded values in the text. The median state has \val{st.count_pc.median.2018Q4} transactions per person per quarter. In this quarter, \val{st.n_above_nat.2018Q4} states have a value above the national value of \val{nat.count_pc.2018Q4}.
+
+In 2026Q2, the lowest value is \val{st.count_pc.min.2026Q2}, in \val{st.count_pc.min.name.2026Q2}, and the highest value is \val{st.count_pc.max.2026Q2}, in \val{st.count_pc.max.name.2026Q2}. The ratio of the highest to the lowest value, also from unrounded values, is \val{st.count_pc.maxmin.2026Q2}. The median state has \val{st.count_pc.median.2026Q2} transactions per person per quarter. In this quarter, \val{st.n_above_nat.2026Q2} states are above the national value of \val{nat.count_pc.2026Q2}. The national value is a mean of the state values with population weights, so it is not the value of a typical state.
+
+Every state of the main sample has a higher value in 2026Q2 than in 2018Q4. From 2018Q4 to 2026Q2, the annual rate of growth of the count per person goes from \val{st.count_pc_rate.min} percent, in \val{st.count_pc_rate.min.name}, to \val{st.count_pc_rate.max} percent, in \val{st.count_pc_rate.max.name}. Part 3 of the project tests whether the states with low values grow faster than the states with high values. This study does not test this relation.
+
+Table~\ref{tab:states} gives the values of all state units in 2026Q2, in the order of the count per person. Next to the count per person, it gives the population, the amount per person, reach, intensity, the average value and the retail share. Thus the table shows the measures of Section~\ref{sec:measures} side by side for each unit.
+
 \begin{table}[tbp]
 \centering
-\caption{State values in 2026Q2. Unit: population in million; count per person per quarter; amount per person in Rs.\ (nominal); users per 1000 persons; transactions per user; average value in Rs.; retail share in percent. Sample: the \val{data.n_main} main-sample states, sorted by count per person. Source: \citet{phonepe_pulse}; population from \citet{ncp2020}.}\label{tab:states}
+\caption{State values in 2026Q2. Unit: population in million; count per person per quarter; amount per person in Rs.\ per quarter (nominal); users per 1000 persons; transactions per user per quarter; average value in Rs.; retail share in percent. Sample: all \val{data.n_ids} state units, sorted by count per person; $^\dagger$ marks the \val{data.n_other_ut} union territories outside the main sample. Source: \citet{phonepe_pulse}; population from \citet{ncp2020}.}\label{tab:states}
 \small
 \input{../../output/study/part1/tables/state_2026q2.tex}
 \end{table}
 
-\subsection{Concentration}
-% Shares of the top five states in count, amount, users and population; number of states for half of all transactions (Table~\ref{tab:concentration}).
+The five states with the highest count per person are \val{st.count_pc.top5.names.2026Q2}. The five states with the lowest values, from the lowest, are \val{st.count_pc.bottom5.names.2026Q2}. All five are in the north-east of India. Each of these five states has lower reach and lower intensity than each state of the top five.
+
+The amount per person goes from Rs.~\val{st.amount_pc.min} per quarter in \val{st.amount_pc.min.name} to Rs.~\val{st.amount_pc.max} in \val{st.amount_pc.max.name}. The ratio of the two unrounded values is \val{st.amount_pc.maxmin}. The amount per person is the count per person times the average value. The average values of the states differ much less than their counts per person, so the two ratios are of similar size.
+
+The size of a state does not decide its place in the table. The three states with the largest population are \val{st.pop.top3.names}. Of these states, \val{st.pop.top3.n_below_median} have a count per person below the median of the main sample. Thus a state with a large population can have a low count per person.
+
+\subsection{Concentration}\label{sec:concentration}
+Table~\ref{tab:concentration} shows how much of the national activity is in a few state units. For each reference quarter, it takes the five units with the largest transaction count. It gives their shares of the national count, amount, registered users and population. Its last row gives the smallest number of units that together have half of the national count. These statistics use all \val{data.n_ids} ids, because the national total is their sum.
 
 \begin{table}[tbp]
 \centering
@@ -294,11 +346,21 @@ The first term is the contribution of reach, and the second term is the contribu
 \input{../../output/study/part1/tables/concentration.tex}
 \end{table}
 
-\subsection{Rank persistence}
-% Spearman correlation of count per person, 2018Q4 against 2026Q2, main sample.
+In 2018Q4, the five units with the largest count are \val{conc.top5.names.2018Q4}. They have \val{conc.top5.count.2018Q4} percent of the count and \val{conc.top5.population.2018Q4} percent of the population. In 2026Q2, the five units are \val{conc.top5.names.2026Q2}. Their share of the count is \val{conc.top5.count.2026Q2} percent, and their share of the population is \val{conc.top5.population.2026Q2} percent. The set of five units changes between the two quarters, so the population share also changes. The share of the amount increases from \val{conc.top5.amount.2018Q4} to \val{conc.top5.amount.2026Q2} percent.
 
-\subsection{Reach and intensity}
-% Users per 1000 persons against transactions per user in 2026Q2 (Figure~\ref{fig:reach_intensity}).
+In both quarters, the five units have a larger share of the count than of the population. The difference is larger in 2026Q2. Their share of the registered users is \val{conc.top5.users.2018Q4} percent in 2018Q4 and \val{conc.top5.users.2026Q2} percent in 2026Q2. In 2026Q2, this share is closer to the population share than to the share of the count. Thus the registered users of these five units make more transactions per user than the users of the other units.
+
+Half of the national count comes from \val{conc.n_half.2018Q4} units in 2018Q4 and from \val{conc.n_half.2026Q2} units in 2026Q2. Thus the count is more concentrated in the units with the largest counts at the end of the period than at the start.
+
+\subsection{Rank persistence}\label{sec:persistence}
+Figure~\ref{fig:state_count_pc} also shows that the order of the states changes little. The Spearman rank correlation of the count per person in 2018Q4 and in 2026Q2 is \val{st.rank_cor}. It uses the \val{data.n_main} states of the main sample, and average ranks for equal values. A value of $1$ means the same order in both quarters.
+
+Of the \val{data.n_main} states, \val{st.n_rank_move_small} move by \val{st.rank_move.threshold} places or fewer between the two quarters. \val{st.rank_rise.name} moves up the most, from rank \val{st.rank_rise.r0} to rank \val{st.rank_rise.r1}. \val{st.rank_fall.names} move down the most, by \val{st.rank_fall.places} places each. \val{st.count_pc.max.name.2018Q4}, the highest state in 2018Q4, is still among the top five in 2026Q2.
+
+This result agrees with \citet{reddy2024icrier}, who found little change in the ranks of states in an earlier release of the data. The two studies use different releases, so their numbers are not comparable (Section~\ref{sec:intro}). A stable order does not mean that the differences in level stay the same. Part 3 of the project measures how these differences change over time.
+
+\subsection{Reach and intensity}\label{sec:reach}
+Count per person is the product of reach and intensity (Section~\ref{sec:measures}). Figure~\ref{fig:reach_intensity} shows the two factors for each state unit in 2026Q2. The horizontal axis gives reach, in registered users per 1000 persons. The vertical axis gives intensity, in transactions per registered user per quarter. The labels are the two-letter codes of Appendix~\ref{app:units}, and grey labels mark the other union territories.
 
 \begin{figure}[tbp]
 \centering
@@ -306,8 +368,14 @@ The first term is the contribution of reach, and the second term is the contribu
 \caption{Reach against intensity in 2026Q2. Unit: registered users per 1000 persons (reach) and transactions per registered user per quarter (intensity). Sample: all \val{data.n_ids} state units; the other union territories are marked. Source: \citet{phonepe_pulse}; population from \citet{ncp2020}.}\label{fig:reach_intensity}
 \end{figure}
 
-\subsection{Decomposition of the variance}
-% Reach and intensity contributions to the cross-state variance of the log of count per person, over time (Figure~\ref{fig:decomposition}, Table~\ref{tab:decomposition}).
+Reach goes from \val{st.users_per_1000.min} registered users per 1000 persons in \val{st.users_per_1000.min.name} to \val{st.users_per_1000.max} in \val{st.users_per_1000.max.name}. Intensity goes from \val{st.intensity.min} transactions per user in \val{st.intensity.min.name} to \val{st.intensity.max} in \val{st.intensity.max.name}. With unrounded values, the ratio of the highest to the lowest value is \val{st.users_per_1000.maxmin} for reach and \val{st.intensity.maxmin} for intensity. Thus the states differ more in intensity than in reach. The north-eastern states with the lowest count per person are at the lower left of the figure, with low reach and low intensity.
+
+The two factors go together, but not closely. Their Spearman rank correlation across the main sample is \val{st.reach_intensity_cor} in 2026Q2 and \val{st.reach_intensity_cor.2018Q4} in 2018Q4. Some states have a much higher rank in one factor than in the other. \val{st.ri_gap.reach.names} rank \val{st.ri_gap.reach.places} places higher in reach than in intensity. \val{st.ri_gap.intensity.names} ranks \val{st.ri_gap.intensity.places} places higher in intensity than in reach.
+
+In the first group, reach is high, but each registered user makes few transactions. In the second group, reach is lower, but each registered user makes many transactions. A cumulative count of registrations can give the first pattern: registrations that are no longer in use increase reach and decrease intensity. The data cannot test this explanation, because they give no count of active users.
+
+\subsection{Decomposition of the variance}\label{sec:decomposition}
+Section~\ref{sec:measures} divides the cross-state variance of the log of the count per person into two parts. One part goes with reach, and the other part goes with intensity. Figure~\ref{fig:decomposition} shows the result for each quarter. The left panel shows the variances of $y$, $r$ and $i$ across the main sample. The right panel shows the two contributions, which add up to $1$ in each quarter. Table~\ref{tab:decomposition} gives the values for the two reference quarters.
 
 \begin{figure}[tbp]
 \centering
@@ -322,20 +390,60 @@ The first term is the contribution of reach, and the second term is the contribu
 \input{../../output/study/part1/tables/decomposition.tex}
 \end{table}
 
-\subsection{Retail share}
-% Retail share against count per person in 2026Q2, with the Spearman coefficient (Figure~\ref{fig:retail_share}).
+In 2018Q4, the contribution of reach is \val{dec.2018Q4.reach} and the contribution of intensity is \val{dec.2018Q4.intensity}. Thus most of the differences in adoption between states went with differences in reach. In 2026Q2, the contribution of reach is \val{dec.2026Q2.reach} and the contribution of intensity is \val{dec.2026Q2.intensity}. Now most of the differences go with differences in intensity.
+
+The change occurs over several years. In 2018Q1, the contribution of reach is \val{dec.2018Q1.reach}. Intensity has the larger contribution for the first time in \val{dec.intensity_first_above}. From \val{dec.intensity_above_from}, it has the larger contribution in every quarter.
+
+The variances in the left panel show how this change occurs. The variance of $r$ falls from \val{dec.2018Q4.var_r} in 2018Q4 to \val{dec.2026Q2.var_r} in 2026Q2. It decreases in every quarter of the period. The variance of $i$ increases from \val{dec.2018Q4.var_i} to \val{dec.2026Q2.var_i}. Thus the states become more similar in reach and less similar in intensity. The term $2\operatorname{cov}(r,i)$ in Table~\ref{tab:decomposition} also increases. This agrees with the higher rank correlation of reach and intensity in 2026Q2 (Section~\ref{sec:reach}).
+
+The variance of $y$ does not move in one direction. It increases from \val{dec.2018Q4.var_y} in 2018Q4 to its largest value, \val{dec.var_y.max}, in \val{dec.var_y.max_period}. It then decreases and increases again to a second peak of \val{dec.var_y.max_late} in \val{dec.var_y.max_late_period}. In 2026Q2, it is \val{dec.2026Q2.var_y}. The variance of $i$ has its largest value, \val{dec.var_i.max}, in \val{dec.var_i.max_period}. Thus the second peak of $\operatorname{var}(y)$ goes with a large spread in intensity.
+
+The decomposition describes how the differences between states divide between reach and intensity. It does not show a cause. Part 3 of the project uses the change of the differences over time in its test of convergence. This study gives only the values.
+
+\subsection{Retail share}\label{sec:retail}
+Figure~\ref{fig:retail_share} shows the retail share of each state unit against its count per person in 2026Q2. The horizontal axis has a log scale. Grey labels mark the other union territories.
 
 \begin{figure}[tbp]
 \centering
 \includegraphics[width=\textwidth]{retail_share.pdf}
-\caption{Retail share of the transaction count against transactions per person in 2026Q2. Unit: percent of the state count; transactions per person per quarter. Sample: the \val{data.n_main} main-sample states. Source: \citet{phonepe_pulse}; population from \citet{ncp2020}.}\label{fig:retail_share}
+\caption{Retail share of the transaction count against transactions per person in 2026Q2. Unit: percent of the state count; transactions per person per quarter. Sample: all \val{data.n_ids} state units; the other union territories are marked. Source: \citet{phonepe_pulse}; population from \citet{ncp2020}.}\label{fig:retail_share}
 \end{figure}
 
+In the main sample, the retail share goes from \val{retail.min} percent in \val{retail.min.name} to \val{retail.max} percent in \val{retail.max.name}. \val{retail.min.name} also has the lowest count per person. The Spearman rank correlation of the retail share and the count per person is \val{retail.cor.2026Q2}. Thus the states with more transactions per person tend to have a larger share of payments to merchants. Of the other union territories, \val{retail.n_other_above} have a retail share above the highest value of the main sample. They are outside the main sample, so they do not enter the correlation.
+
+In 2018Q4, the same coefficient is \val{retail.cor.2018Q4}, with the opposite sign. The type shares of 2018 change by large amounts from quarter to quarter (Section~\ref{sec:types}). Thus the study does not interpret the coefficient of 2018Q4.
+
+The correlation of 2026Q2 does not show a cause. More payments to merchants can increase adoption, or high adoption can bring more merchants to the app. The data of this study cannot separate these two directions.
+
 \section{Limitations of the data}\label{sec:limits}
-% One app; registered users are a cumulative count; the assignment of a transaction to a state is not documented; population values are projections from the 2011 Census; values are nominal; the type shares change sharply in 2018.
+The panel measures the use of one app. PhonePe Pulse covers the transactions of PhonePe, not all UPI transactions. The share of PhonePe in UPI can differ between states. If it does, the panel shows differences between states that are not differences in UPI use. The share can also change over time. Then the growth rates of this study differ from the growth of UPI. This study does not measure the share of PhonePe. Part 2 compares the PhonePe values with the NPCI state data for the quarters from April 2025.
+
+The user count is a count of registrations, not of active users or of persons. The count does not fall in any of the \val{check.users_fall.n} pairs of consecutive quarters (Section~\ref{sec:checks}). This result is consistent with a cumulative count, which keeps the users who no longer use the app. Thus reach can increase in a state while the use of the app does not. The data do not show whether one person can have more than one registration. They also do not show whether a registration moves to a new state when a user moves. Thus reach is not the share of persons who use the app.
+
+The repository does not document how PhonePe assigns a transaction or a user to a state. The README gives the hover count as the transactions done in the quarter for the state. It gives the top user lists as the states that users registered from. It does not say whether the state comes from the address of the user, the location of the device or the location of the merchant. Thus the panel cannot show where a payment between two states goes. A state with many persons who live or work in another state can have values that do not match its resident population.
+
+The population values are projections, not counts. NCP 2020 makes them from the 2011 Census and the Sample Registration System (Section~\ref{sec:data}). The study has no population count for any quarter of the panel. An error in a projection goes directly into each per-person value of that state, and the size of the errors is not known. The per-person values of \val{pop.growth.max.name}, with the largest projected growth, depend most on the projection (Section~\ref{sec:population}). For Goa and most union territories, the report uses a mathematical method that does not project fertility, mortality and migration.
+
+All amounts are nominal. The amount per person and the average value thus include the change in prices over the period. A change in the average value can come from a change in prices or from a change in the size of payments. This study cannot separate the two. The count is a number of transactions, not a value. Thus the growth of the count and the count per person need no price adjustment. Part 2 converts the amounts to real values with the consumer price indices \citep{mospi_cpi}.
+
+The type shares change by large amounts in 2018. The national retail share moves between \val{nat.share.retail.min2018} and \val{nat.share.retail.max2018} percent in that year. The data do not show whether these changes come from changes in use or from the restated definitions of the types (Section~\ref{sec:pulse}). For this reason, the study uses 2018Q4 and not 2018Q1 as the first reference quarter, and it does not interpret the type shares of 2018. The type files also give counts only, so the study cannot divide the amount by type.
 
 \section{Conclusions}\label{sec:conclusions}
-% The findings, each with its number; what Parts 2 and 3 need from this panel.
+This part builds a state-quarter panel of PhonePe adoption for \val{data.n_ids} state units and \val{data.n_quarters} quarters, from 2018Q1 to 2026Q2. The denominator is the quarterly population from the NCP 2020 projections. All data checks pass. The type counts sum to the state counts, and the state files sum to the national files in each quarter. The panel gives the findings below. All values are nominal.
+
+First, the national count grows at an annual rate of \val{nat.count_rate} percent from 2018Q4 to 2026Q2. It reaches \val{nat.count.2026Q2} billion transactions in 2026Q2, or \val{nat.count_pc.2026Q2} transactions per person per quarter. The growth becomes lower over time. The median growth per quarter is \val{nat.qoq.count.median_first} percent up to 2024Q2 and \val{nat.qoq.count.median_last8} percent in the last eight quarters. The count falls only in 2020Q2, with a change of \val{nat.qoq.count.2020Q2} percent.
+
+Second, the average transaction value has a peak of Rs.~\val{nat.atv.peak} in \val{nat.atv.peak_period} and falls to Rs.~\val{nat.atv.2026Q2} in 2026Q2. In the same years, the retail share of the count increases from \val{nat.share.retail.min} percent in \val{nat.share.retail.min_period} to \val{nat.share.retail.2026Q2} percent. This pattern is consistent with more small payments to merchants. The data do not give the amount by type, so the study does not test this explanation.
+
+Third, the differences in adoption between states are large, and the order of the states is stable. The ratio of the highest to the lowest count per person in the main sample is \val{st.count_pc.maxmin.2018Q4} in 2018Q4 and \val{st.count_pc.maxmin.2026Q2} in 2026Q2. The Spearman rank correlation of the state values in the two quarters is \val{st.rank_cor}.
+
+Fourth, the activity is concentrated in a few states. In 2026Q2, the five units with the largest count have \val{conc.top5.count.2026Q2} percent of the count and \val{conc.top5.population.2026Q2} percent of the population. Half of the national count comes from \val{conc.n_half.2026Q2} units.
+
+Fifth, the source of the differences between states changes from reach to intensity. The contribution of reach to the cross-state variance of the log count per person is \val{dec.2018Q4.reach} in 2018Q4 and \val{dec.2026Q2.reach} in 2026Q2. The contribution of intensity increases from \val{dec.2018Q4.intensity} to \val{dec.2026Q2.intensity}.
+
+Sixth, the states with more transactions per person have larger retail shares. In 2026Q2, the Spearman rank correlation of the retail share and the count per person is \val{retail.cor.2026Q2}. The data do not show the direction of this relation.
+
+The later parts of the project use this panel. Part 2 converts the amounts to real values with state consumer price indices. It also compares the PhonePe values with the NPCI state data to measure the share of PhonePe in UPI. It shows the measures on maps. Part 3 uses the count per person of the main sample to test convergence. It tests whether the states with low adoption move closer to the leading states. The results of this part are descriptive. They do not answer the questions of Parts 2 and 3.
 
 \bibliographystyle{plainnat}
 \bibliography{../../references/refs}
