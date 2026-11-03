@@ -16,8 +16,13 @@
 \defval{check.nat_count.flagged}{0}  % national_count_equals_state_sum n_flagged; data/interim/phonepe_checks.csv
 \defval{check.nat_users.n}{34}  % national_users_equals_state_sum n_items; data/interim/phonepe_checks.csv
 \defval{check.nat_users.flagged}{0}  % national_users_equals_state_sum n_flagged; data/interim/phonepe_checks.csv
+\defval{check.users_fall.n}{1{,}155}  % consecutive-quarter pairs, diff(users), load_part1(); data/interim/phonepe.csv
+\defval{check.users_fall.flagged}{0}  % pairs with a fall in users, diff(users), load_part1(); data/interim/phonepe.csv
+\defval{pop.ncp_n_rows}{37}  % state rows per year, ncp_n_rows(); data/manual/population_ncp2020.csv
 \defval{pop.ncp_ratio.2018}{1.0000015}  % state rows / india row; data/manual/population_ncp2020.csv
+\defval{pop.ncp_diff.2018}{2}  % state rows - india row, thousand persons, ncp_diff(); data/manual/population_ncp2020.csv
 \defval{pop.ncp_ratio.2027}{0.9999993}  % state rows / india row; data/manual/population_ncp2020.csv
+\defval{pop.ncp_diff.2027}{$-$1}  % state rows - india row, thousand persons, ncp_diff(); data/manual/population_ncp2020.csv
 \defval{pop.total.2018Q1}{1{,}318.7}  % sum of population; data/interim/population.csv
 \defval{pop.total.2026Q2}{1{,}426.0}  % sum of population; data/interim/population.csv
 \defval{pop.growth_pct}{8.1}  % percent change 2018Q1-2026Q2; data/interim/population.csv
@@ -25,6 +30,8 @@
 \defval{pop.growth.max}{75.5}  % percent change 2018Q1-2026Q2, 35 ids; data/interim/population.csv
 \defval{pop.growth.min.name}{Odisha}  % 35 ids; data/interim/population.csv
 \defval{pop.growth.min}{2.8}  % percent change 2018Q1-2026Q2, 35 ids; data/interim/population.csv
+\defval{pop.growth.main.max.name}{Delhi}  % main sample; data/interim/population.csv
+\defval{pop.growth.main.max}{16.5}  % percent change 2018Q1-2026Q2, main sample; data/interim/population.csv
 \defval{nat.count.2018Q1}{0.14}  % national(); data/interim/phonepe.csv
 \defval{nat.amount.2018Q1}{0.17}  % national(); data/interim/phonepe.csv
 \defval{nat.users.2018Q1}{47.5}  % national(); data/interim/phonepe.csv

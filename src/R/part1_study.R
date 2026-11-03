@@ -93,6 +93,12 @@ for (k in names(CHECK_KEYS)) {
   add(sprintf("check.%s.n", k), r$n_items, 0, paste0(r$check, " n_items; ", F_CHECKS))
   add(sprintf("check.%s.flagged", k), r$n_flagged, 0, paste0(r$check, " n_flagged; ", F_CHECKS))
 }
+# Registered users: change from the previous quarter, per state id (pairs of consecutive quarters).
+users_step <- dt[order(state_id, period), .(d = diff(users)), by = state_id]
+add("check.users_fall.n", nrow(users_step), 0,
+    paste0("consecutive-quarter pairs, diff(users), load_part1(); ", F_PHONEPE))
+add("check.users_fall.flagged", sum(users_step$d < 0), 0,
+    paste0("pairs with a fall in users, diff(users), load_part1(); ", F_PHONEPE))
 
 # population
 ncp_state <- ncp[normalise(raw_name) != "india"]
@@ -100,9 +106,16 @@ ncp_india <- ncp[normalise(raw_name) == "india"]
 ncp_ratio <- function(y) sum(ncp_state[year == y, population_thousands]) /
   ncp_india[year == y, population_thousands]
 ncp_n_rows <- function(y) nrow(ncp_state[year == y])
+# State rows minus the India row, in thousand persons (the unit of Table 8).
+ncp_diff <- function(y) sum(ncp_state[year == y, population_thousands]) -
+  ncp_india[year == y, population_thousands]
+stopifnot(ncp_n_rows(2018L) == ncp_n_rows(2027L))
+add("pop.ncp_n_rows", ncp_n_rows(2018L), 0, paste0("state rows per year, ncp_n_rows(); ", F_NCP))
 for (y in c(2018L, 2027L)) {
   stopifnot(nrow(ncp_india[year == y]) == 1L)
   add(sprintf("pop.ncp_ratio.%d", y), ncp_ratio(y), 7, paste0("state rows / india row; ", F_NCP))
+  add(sprintf("pop.ncp_diff.%d", y), ncp_diff(y), 0,
+      paste0("state rows - india row, thousand persons, ncp_diff(); ", F_NCP))
 }
 pop_grid <- CJ(state_id = labels$state_id, period = periods)
 pop_missing <- nrow(pop_grid) - nrow(pop[variable == "population" & !is.na(value)][pop_grid,
@@ -120,6 +133,9 @@ for (s in c("max", "min")) {
   add(sprintf("pop.growth.%s.name", s), r$name, NULL, paste0("35 ids; ", F_POP))
   add(sprintf("pop.growth.%s", s), r$growth, 1, paste0("percent change 2018Q1-2026Q2, 35 ids; ", F_POP))
 }
+r <- pick(pg[state_id %in% main_ids], "growth", TRUE)
+add("pop.growth.main.max.name", r$name, NULL, paste0("main sample; ", F_POP))
+add("pop.growth.main.max", r$growth, 1, paste0("percent change 2018Q1-2026Q2, main sample; ", F_POP))
 
 # national
 SRC_NAT <- paste0("national(); ", F_PHONEPE)
@@ -254,7 +270,14 @@ write_tabular(
   align = paste0("@{}>{\\raggedright\\arraybackslash}p{2.8cm} l l l ",
                  ">{\\raggedright\\arraybackslash}p{2.8cm} >{\\raggedright\\arraybackslash}p{2.8cm}@{}"),
   header = "Name & \\texttt{state\\_id} & Code & Main & PhonePe raw names & NCP raw names \\\\",
-  env = "longtable", caption = "The 35 state units", label = "tab:units")
+  env = "longtable",
+  caption = sprintf(paste0(
+    "The %d state units of the panel: display name, \\texttt{state\\_id}, two-letter code ",
+    "\\citep{iso3166_2_in}, membership of the main sample of %d, and the raw names that map to ",
+    "the unit in the PhonePe Pulse hover file for %s \\citep{phonepe_pulse} and in NCP 2020, ",
+    "Table 8 \\citep{ncp2020}. Source: state crosswalk (\\texttt{state\\_crosswalk.csv}) and ",
+    "state labels (\\texttt{state\\_labels.csv})."), nrow(labels), length(main_ids), P_LAST),
+  label = "tab:units")
 
 # checks.tex
 CHECK_TEXT <- c(
@@ -276,6 +299,9 @@ note_text <- function(note) {
 chk <- checks[match(CHECK_KEYS, check)]
 chk_rows <- chk[, .(text = paste0(CHECK_TEXT[check], vapply(note, note_text, "")),
                     items = fmt(n_items, 0), flagged = fmt(n_flagged, 0), value = fmt(max_abs_diff, 0))]
+chk_rows <- rbind(chk_rows, data.table(
+  text = "PhonePe: registered users lower than in the previous quarter (pairs of consecutive quarters)",
+  items = fmt(nrow(users_step), 0), flagged = fmt(sum(users_step$d < 0), 0), value = "--"))
 pop_rows <- rbindlist(c(
   lapply(c(2018L, 2027L), function(y) data.table(
     text = sprintf("NCP 2020, %d: sum of the state rows divided by the India row (state rows)", y),
