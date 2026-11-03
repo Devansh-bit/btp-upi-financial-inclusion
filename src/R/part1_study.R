@@ -81,6 +81,11 @@ add("data.n_phonepe_names", length(unique(hover_names)), 0, paste0("raw names; "
 add("data.rows.phonepe", nrow(phonepe), 0, paste0("rows; ", F_PHONEPE))
 add("data.rows.types", nrow(types), 0, paste0("rows; ", F_TYPES))
 add("data.rows.population", nrow(pop), 0, paste0("rows; ", F_POP))
+# Union territories of India (Ladakh is in the id of Jammu and Kashmir). The other ids are states.
+UT_IDS <- c("andaman_nicobar", "chandigarh", "delhi", "dnh_dd", "jammu_kashmir", "lakshadweep", "puducherry")
+stopifnot(all(UT_IDS %in% labels$state_id), all(other_ids %in% UT_IDS),
+          setequal(intersect(main_ids, UT_IDS), c("delhi", "jammu_kashmir")))
+add("data.n_states", sum(!labels$state_id %in% UT_IDS), 0, paste0("ids not in UT_IDS; ", F_LABELS))
 
 # checks
 CHECK_KEYS <- c(type_sum = "type_sum_equals_state_total", zero_fill = "absent_type_set_to_zero",
@@ -93,6 +98,17 @@ for (k in names(CHECK_KEYS)) {
   add(sprintf("check.%s.n", k), r$n_items, 0, paste0(r$check, " n_items; ", F_CHECKS))
   add(sprintf("check.%s.flagged", k), r$n_flagged, 0, paste0(r$check, " n_flagged; ", F_CHECKS))
 }
+# The absent type entry: unit, quarter and type from the note of the check (Section 3.2 of the text).
+TYPES <- c("P2P", "Retail", "Utility")
+zf <- checks[check == CHECK_KEYS[["zero_fill"]]]
+stopifnot(nrow(zf) == 1L, zf$n_flagged == 1L)
+zf_w <- strsplit(zf$note, " ", fixed = TRUE)[[1]]
+stopifnot(length(zf_w) == 3L, zf_w[1] %in% labels$state_id, zf_w[2] %in% periods, zf_w[3] %in% TYPES)
+SRC_ZF <- paste0("note of ", zf$check, "; ", F_CHECKS)
+add("check.zero_fill.name", name_of(zf_w[1]), NULL, SRC_ZF)
+add("check.zero_fill.period", zf_w[2], NULL, SRC_ZF)
+add("check.zero_fill.type", zf_w[3], NULL, SRC_ZF)
+add("check.zero_fill.present_types", join_and(setdiff(TYPES, zf_w[3])), NULL, paste0("types other than the absent type, ", SRC_ZF))
 # Registered users: change from the previous quarter, per state id (pairs of consecutive quarters).
 users_step <- dt[order(state_id, period), .(d = diff(users)), by = state_id]
 add("check.users_fall.n", nrow(users_step), 0,
@@ -117,6 +133,10 @@ for (y in c(2018L, 2027L)) {
   add(sprintf("pop.ncp_diff.%d", y), ncp_diff(y), 0,
       paste0("state rows - india row, thousand persons, ncp_diff(); ", F_NCP))
 }
+# Largest |state rows - India row| from rounding each row to the nearest thousand: 0.5 per row.
+ncp_bound <- 0.5 * (ncp_n_rows(2018L) + 1L)
+add("pop.ncp_diff.bound", ncp_bound, if (ncp_bound == round(ncp_bound)) 0 else 1,
+    paste0("0.5 * (state rows + 1), thousand persons; ", F_NCP))
 pop_grid <- CJ(state_id = labels$state_id, period = periods)
 pop_missing <- nrow(pop_grid) - nrow(pop[variable == "population" & !is.na(value)][pop_grid,
                                          on = c("state_id", "period"), nomatch = NULL])
@@ -139,8 +159,12 @@ add("pop.growth.main.max", r$growth, 1, paste0("percent change 2018Q1-2026Q2, ma
 pg_main <- pg[state_id %in% main_ids][order(-growth, state_id)]
 add("pop.growth.main.top2to4.names", join_and(pg_main$name[2:4]), NULL,
     paste0("main sample, growth ranks 2 to 4 from the top; ", F_POP))
-add("pop.growth.main.bottom2to4.names", join_and(pg_main$name[(nrow(pg_main) - 1L):(nrow(pg_main) - 3L)]), NULL,
+bottom2to4 <- pg_main$name[(nrow(pg_main) - 1L):(nrow(pg_main) - 3L)]
+add("pop.growth.main.bottom2to4.names", join_and(bottom2to4), NULL,
     paste0("main sample, growth ranks 2 to 4 from the bottom, smallest growth first; ", F_POP))
+add("pop.growth.main.min.name", pg_main$name[nrow(pg_main)], NULL, paste0("main sample; ", F_POP))
+add("pop.growth.main.min", pg_main$growth[nrow(pg_main)], 1,
+    paste0("percent change 2018Q1-2026Q2, main sample; ", F_POP))
 
 # national
 SRC_NAT <- paste0("national(); ", F_PHONEPE)
@@ -205,6 +229,14 @@ add("nat.share.retail_above_p2p_from", nat$period[max(below) + 1L], NULL,
 # of share_retail > share_p2p. GAP_FROM is the first quarter after the large 2019 gaps (2019Q1 -15.9,
 # 2019Q3 +11.7 percentage points).
 GAP_FROM <- "2019Q4"
+# The quarters of 2019 before GAP_FROM (2019Q1-2019Q3 in the text): their largest gap.
+gap_pre <- nat[substr(period, 1, 4) == "2019" & period < GAP_FROM]
+stopifnot(identical(gap_pre$period, c("2019Q1", "2019Q2", "2019Q3")))
+gap_pre[, gap := 100 * (share_retail - share_p2p)]
+add("nat.share.gap.pre.max_abs", max(abs(gap_pre$gap)), 1,
+    paste0("max |share_retail - share_p2p|, percentage points, 2019Q1-2019Q3, ", SRC_NATT))
+add("nat.share.gap.pre.max_period", gap_pre[which.max(abs(gap)), period], NULL,
+    paste0("period of max |share_retail - share_p2p|, 2019Q1-2019Q3, ", SRC_NATT))
 gap_win <- nat[period >= GAP_FROM & period <= nat$period[max(below) + 1L]]
 gap_win[, gap := 100 * (share_retail - share_p2p)]
 add("nat.share.gap.from", GAP_FROM, NULL, "start of the close-shares window; part1_study.R")
@@ -424,6 +456,18 @@ add("retail.n_other_above", sum(at(P_LAST, other_ids)$share_retail > max(d_last$
 guard <- function(ok, what) if (!isTRUE(ok)) stop("text statement no longer true: ", what)
 nat_full <- ann_n[year %in% yr_full$year]
 g_ann <- setNames(nat_full$growth_count, nat_full$year)
+# 2.1, 3.3, 6
+guard(sum(users_step$d < 0) == 0L, "2.1, 3.3, 6 registered users never fall from one quarter to the next")
+# 3.2, 3.3
+guard(zf$n_flagged == 1L, "3.2, 3.3 one absent type entry (singular 'entry', 'is absent')")
+# 3.3
+guard(all(abs(c(ncp_diff(2018L), ncp_diff(2027L))) < ncp_bound) && ncp_n_rows(2027L) == ncp_n_rows(2018L),
+      "3.3 NCP differences smaller than the largest difference from rounding")
+# 3.4
+guard(pg_main$name[1] == pick(pg[state_id %in% main_ids], "growth", TRUE)$name,
+      "3.4 pop.growth.main.max is rank 1 of the main sample")
+guard(!pg_main$name[nrow(pg_main)] %in% bottom2to4 && !pg_main$name[1] %in% pg_main$name[2:4],
+      "3.4 ranks 2 to 4 exclude the main-sample maximum and minimum")
 # 4.1
 guard(nat_at(P_LAST)$users / nat_at(P_REF0)$users < nat_at(P_LAST)$count / nat_at(P_REF0)$count &
         nat_at(P_LAST)$amount / nat_at(P_REF0)$amount < nat_at(P_LAST)$count / nat_at(P_REF0)$count,
@@ -456,6 +500,7 @@ from_rmin <- nat[period >= nat[which.min(share_retail), period]]
 guard(mean(diff(from_rmin$share_retail) > 0) > 0.5 && mean(diff(from_rmin$atv) < 0) > 0.5,
       "4.3 from the retail minimum, the retail share rises and the average value falls in most quarters")
 # 4.4
+guard(max(abs(gap_pre$gap)) > max(abs(gap_win$gap)), "4.4 gaps of 2019Q1-2019Q3 larger than in the window")
 guard(nat[which.max(share_utility), period] == nat[which.min(share_retail), period],
       "4.4 utility maximum and retail minimum in the same quarter")
 guard(nat[which.max(share_utility), period] %in% gap_win$period, "4.4 utility maximum inside the close-shares window")
@@ -488,11 +533,12 @@ guard(abs(cs(P_LAST, "users") - cs(P_LAST, "population")) < abs(cs(P_LAST, "coun
       "5.2 users share closer to the population share than to the count share")
 guard(!setequal(top_ids(dt, P_REF0, 5), top_ids(dt, P_LAST, 5)), "5.2 the set of five units changes")
 guard(n_half[[P_LAST]] < n_half[[P_REF0]] && cs(P_LAST, "count") > cs(P_REF0, "count"),
-      "5.2 count more concentrated at the end")
+      "5.2 fewer units for half of the count, larger top-five share at the end")
+guard(cs(P_LAST, "count") > 50, "6 five units have most of the count in 2026Q2")
 # 5.3
 guard(pick(d_ref0, "count_pc", TRUE)$state_id %in% top5$state_id, "5.3 2018Q4 leader still in the top five")
 guard(nrow(fall_rk) > 1L, "5.3 plural verb after st.rank_fall.names")
-guard(sum(abs(rk$up) <= RANK_MOVE) > nrow(rk) / 2, "5.3 order changes little: most states move few places")
+guard(sum(abs(rk$up) <= RANK_MOVE) > nrow(rk) / 2, "5.3 most units move few places")
 # 5.4
 guard(nrow(g_r) > 1L && nrow(g_i) == 1L, "5.4 verbs after st.ri_gap.reach.names (plural) and .intensity.names")
 guard(max(d_last$intensity) / min(d_last$intensity) > max(d_last$users_per_1000) / min(d_last$users_per_1000) &&
@@ -615,7 +661,7 @@ add_note(tab("state_2026q2.tex"), 8, paste0(dagger, " Union territory outside th
 CONC_TEXT <- c(count = "Transaction count", amount = "Amount", users = "Registered users",
                population = "Population")
 conc_rows <- data.table(
-  text = c(paste0(CONC_TEXT, " (percent)"), "States needed for half of all transactions"),
+  text = c(paste0(CONC_TEXT, " (percent)"), "Units needed for half of all transactions"),
   a = c(fmt(conc[[P_REF0]][match(names(CONC_TEXT), variable), share], 1),
         fmt(n_half[[P_REF0]], 0)),
   b = c(fmt(conc[[P_LAST]][match(names(CONC_TEXT), variable), share], 1),
@@ -808,9 +854,11 @@ p <- ggplot() + scatter(last, "users_per_1000", "intensity", log_x = FALSE) +
 save_fig(p, "reach_intensity.pdf", h = 4.0)
 
 # decomposition.pdf
-DEC_PANEL <- c("Variance across states", "Contribution to var(y)")
-COMP <- c(y = "y = ln(transactions per person)", r = "r = ln(users per person)",
-          i = "i = ln(transactions per user)")
+# Each panel title carries the unit of its vertical axis. The legend names the variable of each line:
+# its variance in the left panel, its contribution to var(y) in the right panel.
+DEC_PANEL <- c("Variance across units (variance of logs)", "Contribution to var(y) (share of var(y))")
+COMP <- c(y = "y: transactions per person", r = "r: reach (users per person)",
+          i = "i: intensity (transactions per user)")
 dec[, t := period_num(period)]
 dl <- rbind(dec[, .(t, panel = DEC_PANEL[1], comp = COMP[["y"]], v = var_y)],
             dec[, .(t, panel = DEC_PANEL[1], comp = COMP[["r"]], v = var_r)],
@@ -822,10 +870,11 @@ p <- ggplot(dl, aes(t, v, colour = comp)) +
   geom_hline(yintercept = 0, colour = ink2, linewidth = 0.3) +
   geom_line(linewidth = 0.8) +
   facet_wrap(~panel, nrow = 1, scales = "free_y") +
-  scale_colour_manual(values = setNames(c(col_3, col_1, col_2), COMP), name = NULL) +
+  scale_colour_manual(values = setNames(c(col_3, col_1, col_2), COMP), name = "Variable (in logs):") +
   x_years2 +
-  labs(x = X_QUARTER, y = "Variance of logs; share of var(y)") +
-  theme_study() + theme(legend.position = "bottom", panel.spacing = unit(1, "lines"))
+  labs(x = X_QUARTER, y = NULL) +
+  theme_study() + theme(legend.position = "bottom", legend.title = element_text(size = axis_size),
+                        panel.spacing = unit(1, "lines"))
 save_fig(p, "decomposition.pdf", h = 3.2)
 
 # retail_share.pdf

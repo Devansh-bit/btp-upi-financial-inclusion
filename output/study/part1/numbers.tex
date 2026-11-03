@@ -8,6 +8,7 @@
 \defval{data.rows.phonepe}{3{,}570}  % rows; data/interim/phonepe.csv
 \defval{data.rows.types}{3{,}570}  % rows; data/interim/phonepe_types.csv
 \defval{data.rows.population}{1{,}190}  % rows; data/interim/population.csv
+\defval{data.n_states}{28}  % ids not in UT_IDS; src/R/lib/state_labels.csv
 \defval{check.type_sum.n}{1{,}224}  % type_sum_equals_state_total n_items; data/interim/phonepe_checks.csv
 \defval{check.type_sum.flagged}{0}  % type_sum_equals_state_total n_flagged; data/interim/phonepe_checks.csv
 \defval{check.zero_fill.n}{3{,}672}  % absent_type_set_to_zero n_items; data/interim/phonepe_checks.csv
@@ -16,6 +17,10 @@
 \defval{check.nat_count.flagged}{0}  % national_count_equals_state_sum n_flagged; data/interim/phonepe_checks.csv
 \defval{check.nat_users.n}{34}  % national_users_equals_state_sum n_items; data/interim/phonepe_checks.csv
 \defval{check.nat_users.flagged}{0}  % national_users_equals_state_sum n_flagged; data/interim/phonepe_checks.csv
+\defval{check.zero_fill.name}{Lakshadweep}  % note of absent_type_set_to_zero; data/interim/phonepe_checks.csv
+\defval{check.zero_fill.period}{2018Q1}  % note of absent_type_set_to_zero; data/interim/phonepe_checks.csv
+\defval{check.zero_fill.type}{Utility}  % note of absent_type_set_to_zero; data/interim/phonepe_checks.csv
+\defval{check.zero_fill.present_types}{P2P and Retail}  % types other than the absent type, note of absent_type_set_to_zero; data/interim/phonepe_checks.csv
 \defval{check.users_fall.n}{1{,}155}  % consecutive-quarter pairs, diff(users), load_part1(); data/interim/phonepe.csv
 \defval{check.users_fall.flagged}{0}  % pairs with a fall in users, diff(users), load_part1(); data/interim/phonepe.csv
 \defval{pop.ncp_n_rows}{37}  % state rows per year, ncp_n_rows(); data/manual/population_ncp2020.csv
@@ -23,6 +28,7 @@
 \defval{pop.ncp_diff.2018}{2}  % state rows - india row, thousand persons, ncp_diff(); data/manual/population_ncp2020.csv
 \defval{pop.ncp_ratio.2027}{0.9999993}  % state rows / india row; data/manual/population_ncp2020.csv
 \defval{pop.ncp_diff.2027}{$-$1}  % state rows - india row, thousand persons, ncp_diff(); data/manual/population_ncp2020.csv
+\defval{pop.ncp_diff.bound}{19}  % 0.5 * (state rows + 1), thousand persons; data/manual/population_ncp2020.csv
 \defval{pop.total.2018Q1}{1{,}318.7}  % sum of population; data/interim/population.csv
 \defval{pop.total.2026Q2}{1{,}426.0}  % sum of population; data/interim/population.csv
 \defval{pop.growth_pct}{8.1}  % percent change 2018Q1-2026Q2; data/interim/population.csv
@@ -34,6 +40,8 @@
 \defval{pop.growth.main.max}{16.5}  % percent change 2018Q1-2026Q2, main sample; data/interim/population.csv
 \defval{pop.growth.main.top2to4.names}{Bihar, Jharkhand and Haryana}  % main sample, growth ranks 2 to 4 from the top; data/interim/population.csv
 \defval{pop.growth.main.bottom2to4.names}{Tamil Nadu, Andhra Pradesh and Kerala}  % main sample, growth ranks 2 to 4 from the bottom, smallest growth first; data/interim/population.csv
+\defval{pop.growth.main.min.name}{Odisha}  % main sample; data/interim/population.csv
+\defval{pop.growth.main.min}{2.8}  % percent change 2018Q1-2026Q2, main sample; data/interim/population.csv
 \defval{nat.count.2018Q1}{0.14}  % national(); data/interim/phonepe.csv
 \defval{nat.amount.2018Q1}{0.17}  % national(); data/interim/phonepe.csv
 \defval{nat.users.2018Q1}{47.5}  % national(); data/interim/phonepe.csv
@@ -82,6 +90,8 @@
 \defval{nat.share.retail.min}{37.3}  % min share_retail, national(); data/interim/{phonepe,phonepe_types}.csv
 \defval{nat.share.retail.min_period}{2021Q2}  % period of min share_retail, national(); data/interim/{phonepe,phonepe_types}.csv
 \defval{nat.share.retail_above_p2p_from}{2021Q3}  % first period of the last run of share_retail > share_p2p, national(); data/interim/{phonepe,phonepe_types}.csv
+\defval{nat.share.gap.pre.max_abs}{15.9}  % max |share_retail - share_p2p|, percentage points, 2019Q1-2019Q3, national(); data/interim/{phonepe,phonepe_types}.csv
+\defval{nat.share.gap.pre.max_period}{2019Q1}  % period of max |share_retail - share_p2p|, 2019Q1-2019Q3, national(); data/interim/{phonepe,phonepe_types}.csv
 \defval{nat.share.gap.from}{2019Q4}  % start of the close-shares window; part1_study.R
 \defval{nat.share.gap.max_abs}{6.9}  % max |share_retail - share_p2p|, percentage points, gap.from to retail_above_p2p_from, national(); data/interim/{phonepe,phonepe_types}.csv
 \defval{nat.count.2020Q1}{1.63}  % national(); data/interim/phonepe.csv
