@@ -139,7 +139,7 @@ for (v in c("count", "amount", "users")) {
 }
 SRC_NATP <- "national(); data/interim/{phonepe,population}.csv"
 for (p in c(P_FIRST, P_REF0, P_LAST)) {
-  add(sprintf("nat.count_pc.%s", p), nat_at(p)$count_pc, 1, SRC_NATP)
+  add(sprintf("nat.count_pc.%s", p), nat_at(p)$count_pc, 2, SRC_NATP)
   add(sprintf("nat.users_per_1000.%s", p), nat_at(p)$users_per_1000, 0, SRC_NATP)
 }
 add("nat.qoq.count.2020Q2", nat_at("2020Q2")$qoq_count, 1, paste0("qoq_count, ", SRC_NAT))
@@ -172,9 +172,9 @@ for (q in c(P_REF0, P_LAST)) {
   d <- at(q, main_ids)
   hi <- pick(d, "count_pc", TRUE); lo <- pick(d, "count_pc", FALSE)
   add(sprintf("st.count_pc.max.name.%s", q), hi$name, NULL, SRC_MAIN)
-  add(sprintf("st.count_pc.max.%s", q), hi$count_pc, 1, SRC_MAIN)
+  add(sprintf("st.count_pc.max.%s", q), hi$count_pc, 2, SRC_MAIN)
   add(sprintf("st.count_pc.min.name.%s", q), lo$name, NULL, SRC_MAIN)
-  add(sprintf("st.count_pc.min.%s", q), lo$count_pc, 1, SRC_MAIN)
+  add(sprintf("st.count_pc.min.%s", q), lo$count_pc, 2, SRC_MAIN)
   add(sprintf("st.count_pc.maxmin.%s", q), hi$count_pc / lo$count_pc, 1, paste0("max/min, ", SRC_MAIN))
 }
 d_last <- at(P_LAST, main_ids)
@@ -195,12 +195,8 @@ SRC_CONC <- paste0("top_k(), 35 ids, ", SRC_ALL)
 conc <- list(); n_half <- list()
 for (q in c(P_REF0, P_LAST)) {
   d <- at(q)
-  top_ids <- d[order(-count, state_id)][1:5, state_id]
   conc[[q]] <- top_k(dt, q, 5)
-  # the names must be the ids that top_k() used
-  stopifnot(isTRUE(all.equal(100 * sum(d[state_id %in% top_ids, count]) / sum(d$count),
-                             conc[[q]][variable == "count", share])))
-  add(sprintf("conc.top5.names.%s", q), join_and(name_of(top_ids)), NULL, SRC_CONC)
+  add(sprintf("conc.top5.names.%s", q), join_and(name_of(top_ids(dt, q, 5))), NULL, SRC_CONC)
   add(sprintf("conc.top5.count.%s", q), conc[[q]][variable == "count", share], 1, SRC_CONC)
   add(sprintf("conc.top5.population.%s", q), conc[[q]][variable == "population", share], 1, SRC_CONC)
   n_half[[q]] <- n_for_share(d$count, 0.5)
@@ -367,8 +363,9 @@ name_axis <- function(d, x_edge = -Inf) {
 }
 
 # national_totals.pdf
-MEAS <- c(count = "Transactions (billion)", amount = "Amount (Rs. lakh crore)",
-          users = "Registered users (million)")
+MEAS <- c(count = "Transactions in the quarter\n(billion)",
+          amount = "Amount in the quarter\n(Rs. lakh crore)",
+          users = "Registered users at quarter end\n(million)")
 tot <- rbind(nat[, .(t, measure = MEAS[["count"]], v = count / 1e9)],
              nat[, .(t, measure = MEAS[["amount"]], v = amount / 1e12)],
              nat[, .(t, measure = MEAS[["users"]], v = users / 1e6)])
@@ -377,7 +374,7 @@ p <- ggplot(tot, aes(t, v)) +
   geom_line(colour = col_1, linewidth = 0.8) +
   facet_wrap(~measure, nrow = 1, scales = "free_y") +
   x_years2 + scale_y_continuous(limits = c(0, NA)) +
-  labs(x = X_QUARTER, y = "Quarterly total (unit in panel title)") +
+  labs(x = X_QUARTER, y = "Value (unit in panel title)") +
   theme_study() + theme(panel.spacing = unit(1, "lines"))
 save_fig(p, "national_totals.pdf", h = 2.9)
 

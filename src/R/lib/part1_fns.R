@@ -97,10 +97,13 @@ spread <- function(dt, var, ids) {
        q3 = quantile(get(var), 0.75, type = 7, names = FALSE)), by = period][order(period)]
 }
 
-# Share (percent) of the total held by the k ids with the largest count in per.
+# The k ids with the largest count in per, largest first; ties broken by state_id.
+top_ids <- function(dt, per, k = 5) dt[period == per][order(-count, state_id)][seq_len(k), state_id]
+
+# Share (percent) of the total held by the k ids of top_ids() in per.
 top_k <- function(dt, per, k = 5) {
   d <- dt[period == per]
-  top <- d[order(-count)][seq_len(k), state_id]
+  top <- top_ids(dt, per, k)
   rbindlist(lapply(c("count", "amount", "users", "population"), function(v)
     data.table(variable = v, share = 100 * sum(d[state_id %in% top][[v]]) / sum(d[[v]]))))
 }

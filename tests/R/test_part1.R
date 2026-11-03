@@ -32,6 +32,14 @@ test_that("top_k", {
   expect_setequal(t$variable, c("count", "amount", "users", "population"))
 })
 
+test_that("top_ids breaks a tie by state_id, and top_k uses the same ids", {
+  d <- data.table(state_id = c("d", "c", "b", "a"), period = "2020Q1", count = c(50, 10, 30, 10),
+                  amount = 1, users = 1, population = c(1, 2, 3, 4))
+  expect_equal(top_ids(d, "2020Q1", k = 3), c("d", "b", "a"))
+  # ids d, b, a hold population 1 + 3 + 4 of 10
+  expect_equal(top_k(d, "2020Q1", k = 3)[variable == "population"]$share, 80)
+})
+
 test_that("n_for_share", {
   expect_equal(n_for_share(c(50, 30, 10, 10)), 1L)
   expect_equal(n_for_share(c(40, 30, 20, 10)), 2L)
