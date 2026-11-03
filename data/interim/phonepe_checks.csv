@@ -1,0 +1,5 @@
+check,n_items,n_flagged,max_abs_diff,note
+type_sum_equals_state_total,1224,0,0,
+absent_type_set_to_zero,3672,1,0,lakshadweep 2018Q1 Utility
+national_count_equals_state_sum,34,0,0,
+national_users_equals_state_sum,34,0,0,

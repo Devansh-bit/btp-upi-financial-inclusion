@@ -13,6 +13,7 @@ data:
 	$(MOD).check_raw
 	$(MOD).fetch_phonepe
 	$(MOD).parse_phonepe
+	$(MOD).parse_phonepe_types
 	$(MOD).extract_ncp
 	$(MOD).population
 	$(MOD).cpi

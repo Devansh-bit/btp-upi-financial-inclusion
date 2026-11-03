@@ -1,0 +1,1 @@
+{"success": true, "code": "SUCCESS", "data": {"hoverDataList": [{"name": "andhra pradesh", "metric": [{"type": "TOTAL", "count": 10862829, "amount": 14001071206.72507}]}, {"name": "jammu & kashmir", "metric": [{"type": "TOTAL", "count": 100, "amount": 1000.0}]}, {"name": "ladakh", "metric": [{"type": "TOTAL", "count": 10, "amount": 50.0}]}]}, "responseTimestamp": 1}
