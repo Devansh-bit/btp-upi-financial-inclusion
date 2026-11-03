@@ -25,6 +25,14 @@ test_that("test_bad_key", {
 test_that("test_non_finite", {
   expect_error(nv("a.b", NA_real_, 1, "x"))
   expect_error(nv("a.b", Inf, 1, "x"))
+  expect_error(nv("a.b", NA, 1, "x"))
+  expect_error(nv("a.b", NA_character_, source = "x"))
+  expect_error(nv("a.b", TRUE, source = "x"))
+  expect_error(fmt(NA_real_, 1))
+  expect_error(fmt(Inf, 1))
+  expect_error(fmt(c(1, NaN), 1))
+  e <- as.data.table(list(key = "a.b", value = NA_character_, source = "x"))
+  expect_error(write_numbers(e, tempfile(), "gen.R"))
 })
 
 test_that("test_duplicate", {
