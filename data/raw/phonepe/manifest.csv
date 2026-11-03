@@ -1,2 +1,3 @@
 file,url,retrieved,sha256,notes
 repo,https://github.com/PhonePe/pulse.git,2026-11-01,,git commit 257bf38e3095020f9f516c4c72c10bdc348781b1
+repo,https://github.com/PhonePe/pulse.git,2026-11-04,,git commit 257bf38e3095020f9f516c4c72c10bdc348781b1; sparse paths: data/map/transaction/hover/country/india;data/map/user/hover/country/india;data/aggregated/transaction/country/india;data/aggregated/user/country/india
