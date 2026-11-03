@@ -1,0 +1,376 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\PassOptionsToPackage{hyphens}{url}
+\usepackage[hidelinks]{hyperref}
+\sloppy
+\setlist{nosep}
+\usepackage{microtype}
+\setlength{\emergencystretch}{3em}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\f}[1]{\texttt{#1}}
+
+\title{Design Specification\\[2pt]\large Part 1 as a study: the PhonePe Pulse state panel, 2018--2026}
+\author{BTP, IIT Kharagpur --- Supervisor: Prof.\ Rudra Prakash Pradhan (VGSOM)}
+\date{4 November 2026}
+
+\begin{document}
+\maketitle
+
+\section{Request and understanding}
+
+\paragraph{Request (verbatim).} ``youve framed the parts as progress updates. present them as a very
+detailed study of that part. put in graphs numbers everything. write it in normal, detailed prose like a
+paper, but keep following the simple english words usage. please rewrite part 1 keeping this in mind.''
+
+\paragraph{What the request says.}
+\begin{itemize}
+  \item The Part 1 document changes from a two-page progress report to a detailed study of the
+        Part 1 subject.
+  \item The study has figures, tables and numbers.
+  \item The text is paper prose: full paragraphs that explain the data, the method, each figure and
+        table, and what the numbers show.
+  \item The words and sentences follow ASD-STE100 Simplified Technical English (STE).
+  \item Only Part 1 is rewritten now.
+\end{itemize}
+
+\paragraph{Assumptions (not said in the request).}
+\begin{itemize}
+  \item The reader is the supervisor. The study must stand alone: a reader who has not seen the code
+        can follow the data, the method and the results.
+  \item The subject of Part 1 is the adoption data and its denominator: the state crosswalk, the
+        PhonePe Pulse ingestion and the population projections. The study describes these data and
+        what they show in nominal terms.
+  \item Parts 2 and 3 will be rewritten later in the same format. This design makes the format
+        reusable; it does not plan those parts.
+\end{itemize}
+
+\paragraph{Success criteria.}
+\begin{enumerate}
+  \item The document reads as a study by the author (Devansh Gupta). It does not refer to ``the
+        student'', to AI, or to plan task numbers.
+  \item Every number in the text, the tables and the figures comes from committed data by committed
+        code. No number in the prose is typed by hand.
+  \item One command sequence rebuilds every number, table and figure of the study from the raw data:
+        \f{make data analysis report}.
+  \item The study stays inside the Part 1 data scope (Section~\ref{sec:scope}).
+  \item The files that Parts 2 and 3 use do not change. The check is
+        \f{git diff --exit-code} on \f{data/interim/phonepe.csv}, \f{data/interim/population.csv},
+        \f{data/final/} and \f{output/tables/} after the rebuild. The figure PDFs of Part 3 are not
+        compared: each PDF has its creation date inside the file.
+  \item The document compiles with \f{latexmk} with no undefined references, no undefined numbers and
+        no overfull boxes wider than 1\,pt.
+\end{enumerate}
+
+\section{Scope}\label{sec:scope}
+
+\paragraph{In scope.}
+\begin{itemize}
+  \item State crosswalk: \f{src/py/btpdata/states.py}, \f{state\_crosswalk.csv} (46 name variants, 35
+        \f{state\_id} values, main sample of 30).
+  \item PhonePe Pulse at the pinned commit \f{257bf38} (24 September 2026): state-quarter transaction
+        count, amount and registered users (\f{data/interim/phonepe.csv}), and the new split of the
+        transaction count by type (Section~\ref{sec:types}).
+  \item NCP 2020 population projections, Table 8 (\f{data/manual/population\_ncp2020.csv},
+        \f{data/interim/population.csv}).
+  \item Nominal values, per-person values with the NCP population, shares, growth rates, rank
+        statistics, dispersion of logs across states, and data checks.
+\end{itemize}
+
+\paragraph{Out of scope.}
+\begin{itemize}
+  \item CPI deflation and real values (Part 2).
+  \item The comparison with NPCI state data (Part 2). The study cites the NPCI data constraint (state
+        data only from April 2025) as the reason for the proxy, with no NPCI numbers.
+  \item Maps (they need the Part 2 boundary file).
+  \item $\beta$-convergence regressions and the coefficient-of-variation figure (Part 3).
+  \item Edits to \f{thesis/btp1/}, \f{thesis/btp1-slides/} and \f{thesis/progress/}.
+  \item Parts 2 and 3 of the study.
+\end{itemize}
+
+\section{Approaches considered}
+
+\begin{description}
+  \item[A. Code-generated study (selected).] Python adds the new PhonePe input and the data checks.
+        One R script reads the interim files and writes the figures (PDF), the tables (\f{.tex}) and a
+        file of computed numbers (\f{numbers.tex}). The document gets every number in the prose from that
+        file with a macro \verb|\val{key}|. An unknown key stops the compile.
+        Advantage: numbers cannot drift from the data; the rebuild is one command.
+        Cost: one more R script and a key list to keep.
+  \item[B. Hand-typed numbers with command comments.] The method of the progress reports: each number is
+        typed, and a \verb|%| comment gives the command. Rejected: a study of 20 or more pages has
+        hundreds of numbers. Each data change needs a manual edit, and a typed number can differ from
+        the data without an error.
+  \item[C. knitr (\f{.Rnw}) with inline R.] Rejected: \f{latexmk} does not run knitr, so the
+        \f{report} target needs a new step; analysis code and prose mix in one file; a reviewer cannot
+        read the numbers without a build.
+\end{description}
+
+\section{Design}
+
+\subsection{File layout}
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+File & Purpose \\
+\midrule
+\f{src/py/btpdata/fetch\_phonepe.py} (modify) & add two sparse paths; apply the sparse set again if it
+  differs from the checkout \\
+\f{src/py/btpdata/parse\_phonepe\_types.py} (new) & transaction count by type; data checks \\
+\f{data/interim/phonepe\_types.csv} (new) & \f{state\_id, period, variable, value, source};
+  variables \f{phonepe\_count\_p2p}, \f{phonepe\_count\_retail}, \f{phonepe\_count\_utility} \\
+\f{data/interim/phonepe\_checks.csv} (new) & one row per check: \f{check, n\_compared, n\_mismatch,
+  max\_abs\_diff, note} \\
+\f{src/R/lib/state\_labels.csv} (new) & \f{state\_id, name, code}: display name and two-letter code for
+  the 35 ids \\
+\f{src/R/lib/study\_theme.R} (new) & ggplot2 theme and PDF save helper for the study figures \\
+\f{src/R/lib/part1\_fns.R} (new) & measures, national series, shares, concentration, decomposition,
+  rank statistics \\
+\f{src/R/lib/latex\_out.R} (new) & number formatting, \f{numbers.tex} writer, \f{.tex} table writer \\
+\f{src/R/part1\_study.R} (new) & reads interim data; writes all study outputs \\
+\f{output/study/part1/figures/*.pdf} (new) & study figures \\
+\f{output/study/part1/tables/*.tex} (new) & study tables (tabular bodies, no float) \\
+\f{output/study/part1/numbers.tex} (new) & computed numbers as \texttt{\textbackslash val} definitions \\
+\f{thesis/study/part1.tex}, \f{part1.pdf} (new) & the study document and its committed PDF \\
+\f{tests/py/test\_fetch\_phonepe.py}, \f{test\_phonepe\_types.py} (new) & Python tests \\
+\f{tests/R/test\_part1.R}, \f{test\_latex\_out.R} (new) & R tests \\
+\f{Makefile} (modify) & \f{data}: add \f{parse\_phonepe\_types}; \f{analysis}: add
+  \f{part1\_study.R}; \f{report}: build \f{thesis/study/part*.tex} \\
+\bottomrule
+\end{tabularx}
+
+\subsection{PhonePe inputs}\label{sec:types}
+The pinned commit has nine data folders: \f{aggregated}, \f{map} and \f{top}, each for
+\f{transaction}, \f{user} and \f{merchant}. The current clone has only \f{map/transaction/hover} and
+\f{map/user/hover}. The study uses:
+\begin{itemize}
+  \item \f{map/transaction/hover/country/india/<y>/<q>.json}: count and amount by state (already used).
+  \item \f{map/user/hover/country/india/<y>/<q>.json}: registered users by state (already used).
+  \item \f{aggregated/transaction/country/india/state/<state>/<y>/<q>.json}: count by type
+        (\f{P2P}, \f{Retail}, \f{Utility}). There is no amount by type at this commit. The README of the
+        commit defines the types as person-to-person transfers, payments to merchants, and recharges and
+        bill payments, and says that the three types sum to the total.
+  \item \path{aggregated/transaction/country/india/<y>/<q>.json} and
+        \path{aggregated/user/country/india/<y>/<q>.json}: national totals, for checks only.
+\end{itemize}
+The two new sparse paths are \path{data/aggregated/transaction/country/india} and
+\path{data/aggregated/user/country/india}.
+
+\paragraph{Facts verified on a scratch clone of the pinned commit (4 November 2026).}
+\begin{itemize}
+  \item The type files have 1224 state-quarters (36 raw names $\times$ 34 quarters). The sum of the
+        three types equals the hover count in all 1224. One entry is absent: Lakshadweep, 2018Q1,
+        \f{Utility}; the other two types already sum to the total.
+  \item The national transaction files equal the sum of the 36 state counts in all 34 quarters. The
+        national user files equal the sum of the 36 state user counts in all 34 quarters.
+  \item The state folder names use hyphens (\f{jammu-\&-kashmir}).
+  \item No state has a fall in registered users from one quarter to the next.
+\end{itemize}
+
+\paragraph{Parser rules.}
+\begin{itemize}
+  \item Folder name to \f{state\_id}: replace \f{-} by a space, then \f{to\_state\_id}. The crosswalk
+        and \f{normalise} do not change.
+  \item An absent type in a state-quarter gets 0 only if the present types sum to the hover count of that
+        state-quarter. Otherwise the parser stops and names the file.
+  \item The parser stops if the type sum differs from the hover count, or if a national file differs
+        from the state sum. It writes \f{phonepe\_checks.csv} with the counts of compared items and of
+        mismatches (0 after a passing run) and the number of absent entries set to 0.
+  \item Merged ids use \f{sum\_merged}, as in \f{parse\_phonepe.py}.
+\end{itemize}
+
+\paragraph{Not used, with reason (stated in the study).}
+\begin{itemize}
+  \item Registered merchants: a life-till-date count; 18 of the 36 raw units have no file for one or
+        more quarters of 2018--2019.
+  \item District files (\f{map/.../state/...}) and top-10 lists: the unit of the BTP is the state; the
+        district names change over the period and need a separate district crosswalk.
+  \item App opens and device brands: not in the pinned commit. The commit restates the series from
+        2018Q1 with new definitions; its README says that the series must not be joined with earlier
+        releases.
+\end{itemize}
+
+\subsection{Measures}
+For state $s$ and quarter $t$: $C$ is the transaction count, $A$ the amount in rupees (nominal), $U$ the
+registered users, $P$ the population, and $C^k$ the count of type $k$.
+\begin{align*}
+\text{count per person} &= C/P &
+\text{amount per person} &= A/P \\
+\text{users per 1000 persons (reach)} &= 1000\,U/P &
+\text{transactions per user (intensity)} &= C/U \\
+\text{average transaction value} &= A/C &
+\text{type share} &= C^k / C
+\end{align*}
+The identity $\ln(C/P) = \ln(U/P) + \ln(C/U)$ splits adoption into reach and intensity. Across the
+states of the main sample in one quarter,
+\[
+1 = \frac{\operatorname{cov}(\ln(U/P), \ln(C/P))}{\operatorname{var}(\ln(C/P))}
+  + \frac{\operatorname{cov}(\ln(C/U), \ln(C/P))}{\operatorname{var}(\ln(C/P))}.
+\]
+The two terms are the contributions of reach and intensity to the cross-state variance. A scratch run
+gives reach 0.78 and intensity 0.22 in 2018Q4, and reach 0.39 and intensity 0.61 in 2026Q2. The study
+reports these numbers from \f{numbers.tex}, not from this specification.
+
+\paragraph{Samples and reference quarters.} Figures and tables show all 35 ids and mark the five
+union territories outside the main sample. Statistics across states (variance, rank correlation,
+correlation, decomposition) use the 30 ids of the main sample. State comparisons use 2018Q4 and
+2026Q2.
+
+\subsection{Study document: structure}
+\f{thesis/study/part1.tex}; article class, 11pt, A4, the preamble of the progress reports plus
+\f{tikz}, \f{longtable} and \f{caption}; \f{plainnat} with \f{references/refs.bib}. Title: ``Digital
+payment adoption across Indian states, 2018--2026: building the state panel from PhonePe Pulse''.
+Subtitle line: ``BTP study, Part 1''. Author: Devansh Gupta. Target length: 20 to 30 pages.
+
+\begin{enumerate}
+  \item \textbf{Abstract.} Data, method, four to six main numbers.
+  \item \textbf{Introduction.} The BTP question; why a state panel of adoption is necessary; NPCI
+        state data only from April 2025 (\f{npci\_upi\_state}, \f{medianama2025npci}); PhonePe Pulse as
+        the source, with its prior use (\f{reddy2024icrier}); the aim and the contents of this part;
+        what Parts 2 and 3 add (one sentence each).
+  \item \textbf{Data sources.} PhonePe Pulse: what the repository is, licence, layout, the files that
+        the study uses and does not use, with reasons (Table: data files). NCP 2020: what the report
+        projects, the reference date (1 March), the years used. Figure: data flow (TikZ) from the raw
+        files to the interim tables.
+  \item \textbf{Construction of the panel.} State units and the crosswalk (Table: the 35 units, in the
+        appendix); merged ids and the summation rule; parsing; the data checks (Table: checks, from
+        \f{phonepe\_checks.csv} and the population checks); population interpolation (formula, NCP sum
+        check, Figure: population growth by state); the measures (Section~\ref{sec:types} formulas).
+  \item \textbf{Adoption in India as a whole.} Figure: national count, amount and users. Table: annual
+        totals and growth. Figure: quarter-on-quarter growth (2020Q2 is the only quarter with a fall in
+        the national count). Figure: average transaction value (national, and median and interquartile
+        range across states). Figure: national type shares.
+  \item \textbf{Adoption across states.} Figure: count per person by state, 2018Q4 and 2026Q2.
+        Table: state values in 2026Q2. Table: concentration (top five states: shares of count, amount,
+        users and population; number of states for half of all transactions). Rank persistence
+        (Spearman correlation of count per person, 2018Q4 against 2026Q2). Figure: reach against
+        intensity, 2026Q2. Figure and table: the variance decomposition over time. Figure: retail share
+        against count per person, 2026Q2, with the Spearman coefficient.
+  \item \textbf{Limitations of the data.} One app (its share of UPI is a Part 2 question); registered
+        users are a cumulative count, not active users; how PhonePe assigns a transaction to a state is
+        not documented in the repository; the population values are projections from the 2011 Census;
+        values are nominal; the type shares change sharply in 2018.
+  \item \textbf{Conclusions.} The findings, each with its number; what the later parts need from this
+        panel.
+  \item \textbf{Appendix A.} The 35 units (long table). \textbf{Appendix B.} Reproduction: commands,
+        pinned commit, file paths, and the rule that \f{numbers.tex} is generated.
+\end{enumerate}
+Each figure and table has a paragraph in the text that says what it shows and what the numbers mean.
+Interpretation is allowed when the numbers support it. A cause is stated only with evidence; else the
+text says that the data do not show the cause.
+
+\subsection{Numbers mechanism}
+\begin{itemize}
+  \item \path{output/study/part1/numbers.tex} has one line per number:
+        \verb|\defval{nat.count.2026Q2}{38.66}| and a \verb|%| comment that names the R function and
+        the input file. The header says: generated by \f{Rscript src/R/part1\_study.R}; do not edit.
+  \item The document defines \verb|\defval| and \verb|\val|. \verb|\val{key}| prints the value;
+        an unknown key gives \verb|\PackageError| with the key name, so the compile fails.
+  \item Keys are lower case, dot-separated: \f{<topic>.<item>[.<period>]}. The plan lists every key.
+  \item The R writer formats the values (thousands separators as \verb|{,}|, fixed decimals per key),
+        stops on a duplicate key, on a key outside the pattern, and on a non-finite value.
+  \item Tables are \f{.tex} files with the \f{tabular} body only. The document gives the float,
+        caption and label.
+\end{itemize}
+
+\subsection{Figures}
+R and ggplot2 (no new packages; \f{ggrepel} is not installed, so point labels are the two-letter
+codes of \f{state\_labels.csv}). One theme in \f{study\_theme.R}, with the palette of
+\f{src/R/01\_descriptives.R}. Width 6.3\,in. Each figure has a caption with the unit, the sample, the
+period and the source. Files: \f{national\_totals}, \f{national\_growth}, \f{avg\_value},
+\f{type\_shares}, \f{state\_count\_pc}, \f{reach\_intensity}, \f{decomposition}, \f{retail\_share},
+\f{population\_growth} (all \f{.pdf}). The data-flow figure is TikZ in the document.
+
+\subsection{Language rules}
+\begin{itemize}
+  \item STE vocabulary and sentence rules: common words, one meaning per word, short sentences
+        (descriptive sentences up to 25 words), active voice, one topic per paragraph.
+  \item Paper prose: paragraphs, not lists, for the method and the results. Lists only for sets of
+        items (files, checks).
+  \item No filler, no idioms, no hype words, no value judgments. A banned-word check (plan) catches
+        common cases.
+  \item Units: transactions in billion or per person per quarter; amounts in rupees (Rs.) or Rs.\ lakh
+        crore ($10^{12}$ rupees); users in million or per 1000 persons; population in million.
+\end{itemize}
+
+\subsection{Testing}
+\begin{itemize}
+  \item Python (pytest): fetch re-applies a changed sparse set (local Git fixture repository, no
+        network); type parser on fixtures: values, merged ids, hyphen names, zero fill, stop on a sum
+        mismatch, stop on a national mismatch, checks file content.
+  \item R (testthat): each function in \f{part1\_fns.R} on small hand-made data with known answers
+        (the decomposition terms sum to 1; top-$k$ share; growth; rank correlation); the writer in
+        \f{latex\_out.R} (format, duplicate key, bad key, non-finite value).
+  \item Build: \f{make test}; \f{make data analysis}; \f{git diff --exit-code} on the Part 2--3 files;
+        \f{latexmk} log check; banned-word check.
+\end{itemize}
+
+\subsection{Format for Parts 2 and 3 (not planned now)}
+The same pattern applies: \f{thesis/study/part<N>.tex}, \f{src/R/part<N>\_study.R},
+\path{output/study/part<N>/{figures,tables}/}, \path{output/study/part<N>/numbers.tex}, the same
+\verb|\val| mechanism and theme, and a tag \f{part<N>-study}. Part 2 adds the CPI deflation, the NPCI
+comparison and maps; Part 3 adds the convergence analysis. Each later part cites the earlier study parts
+and does not repeat their tables.
+
+\section{Decisions taken automatically}
+The process asks the user at these points. No user was present; each decision below is the
+recommended option.
+
+\begin{enumerate}
+  \item \textbf{Process path: architectural.} New ingestion, new analysis script and a new document
+        format change several components.
+  \item \textbf{Identity of the rewritten Part 1: new file \f{thesis/study/part1.tex} and new tag
+        \f{part1-study}.} The tag \f{part1} and \f{thesis/progress/part1.tex} stay as the record of the
+        first submission; a new directory keeps the old and new formats apart and gives Parts 2--3 a
+        place.
+  \item \textbf{Approach A (code-generated numbers).} Only this approach makes a wrong number a build
+        error.
+  \item \textbf{Use the transaction-type split.} It decomposes the main adoption variable exactly and
+        is inside the PhonePe ingestion scope.
+  \item \textbf{Do not use merchants, districts, top lists.} Incomplete early coverage (merchants);
+        the unit is the state and districts need a new crosswalk (districts, top lists).
+  \item \textbf{No CPI, no NPCI numbers, no maps.} They belong to Part 2 data; the request keeps
+        Part 1 inside its own data.
+  \item \textbf{No $\beta$-regression and no CV figure; use the reach--intensity variance
+        decomposition.} The CV of count per person is already in Part 3; the decomposition is new and
+        uses only Part 1 data.
+  \item \textbf{Statistics across states use the 30-id main sample; displays show all 35.} Same
+        sample rule as the master design.
+  \item \textbf{Reference quarters 2018Q4 and 2026Q2.} The master plan uses 2018Q4 to avoid the very
+        small 2018Q1 base; the type shares also move sharply in the first three quarters of 2018.
+  \item \textbf{Python for ingestion, R for analysis and outputs.} Same split as the existing
+        pipeline; no new packages.
+  \item \textbf{Hyphen handling in the type parser only.} A change to \f{normalise} could change other
+        sources and the Part 2--3 files.
+  \item \textbf{Absent type entry is 0 only after the sum check.} The zero then follows from the data,
+        not from an assumption.
+  \item \textbf{New theme file; \f{01\_descriptives.R} unchanged.} A refactor of the Part 3 script
+        would rebuild Part 3 figures for no change in content.
+  \item \textbf{State codes for labels from ISO 3166-2:IN, logged as a source.} \f{ggrepel} is not
+        installed; full names overlap.
+  \item \textbf{Units: billion transactions, Rs.\ lakh crore, million users.} Readable totals;
+        lakh crore is the unit of the earlier reports.
+  \item \textbf{Committed PDF \f{thesis/study/part1.pdf}.} Same rule as the progress reports.
+  \item \textbf{Tag \f{part1-study} created locally, not pushed.} The task forbids a push.
+\end{enumerate}
+
+\section{Risks}
+\begin{tabularx}{\textwidth}{@{}Y Y@{}}
+\toprule
+Risk & Response \\
+\midrule
+GitHub fetch of the new sparse paths fails or is slow & \f{fetch} stops with the Git error; run again.
+  The parser stops if a file is absent. \\
+A check fails on the real data & The parser stops and names the file. Investigate before any change to
+  the rule; record the finding in the study. \\
+Figure PDFs differ at each build (creation date) & Rebuild comparison covers CSV, \f{.tex} tables and
+  \f{numbers.tex}, not figure PDFs (same rule as Part 3). \\
+Prose drifts from STE & Banned-word check; reviewer checks sentence length and voice. \\
+\bottomrule
+\end{tabularx}
+
+\end{document}
