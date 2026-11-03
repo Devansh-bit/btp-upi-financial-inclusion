@@ -1,0 +1,646 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\makeatletter\renewcommand\verbatim@font{\footnotesize\ttfamily}\makeatother
+\sloppy
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{enumitem}
+\PassOptionsToPackage{hyphens}{url}
+\usepackage[hidelinks]{hyperref}
+\setlength{\emergencystretch}{3em}
+\setlist{nosep}
+\newlist{steps}{itemize}{1}
+\setlist[steps]{label=$\square$, leftmargin=1.5em, itemsep=2pt}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\f}[1]{\texttt{#1}}
+
+\title{Implementation Plan\\[2pt]\large Part 1 as a study: the PhonePe Pulse state panel, 2018--2026}
+\date{4 November 2026}
+\begin{document}
+\maketitle
+
+\noindent\textbf{For agentic workers:} REQUIRED SUB-SKILL: use \f{superpowers:subagent-driven-development}
+(recommended) or \f{superpowers:executing-plans} to implement this plan task by task. Each step is a
+checkbox ($\square$); mark it done ($\blacksquare$) when complete.
+
+\paragraph{Goal.} Replace the two-page Part 1 progress report with a 20--30 page study,
+\f{thesis/study/part1.tex}, in paper prose with STE words, where every number comes from code.
+
+\paragraph{Architecture.} Python adds one PhonePe input (transaction count by type) and a data-check file.
+One R script reads the Part 1 interim files and writes the study figures (PDF), tables (\f{.tex}) and a file
+of computed numbers (\f{numbers.tex}). The document prints each number with \verb|\val{key}|; an unknown
+key stops the compile.
+
+\paragraph{Tech stack.} Python 3.12 (pandas, pytest) in \f{.venv}; R 4.3.3 with \f{renv} (data.table,
+ggplot2, testthat); pdflatex, BibTeX (\f{plainnat}), \f{latexmk}; GNU Make; Git. No new packages.
+
+\paragraph{Spec.} \f{docs/superpowers/specs/2026-11-04-part1-study-design.tex}. Read it before each task.
+Background: \f{docs/superpowers/specs/2026-11-01-upi-financial-inclusion-design.tex},
+\f{thesis/progress/part1.tex}.
+
+\section*{Global constraints}
+\begin{itemize}
+\item Branch \f{btp1}. Do not push. Do not move or delete tags. Do not rewrite history. Do not backdate.
+\item Each commit message ends with the line \f{Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>}
+      (after one blank line).
+\item Do not change these files: \f{data/interim/phonepe.csv}, \f{data/interim/population.csv},
+      \f{data/interim/cpi.csv}, \f{data/interim/npci.csv}, \f{data/final/*}, \f{output/tables/*},
+      \f{src/py/btpdata/states.py}, \f{state\_crosswalk.csv}, \f{src/R/01\_descriptives.R},
+      \f{thesis/btp1/*}, \f{thesis/btp1-slides/*}, \f{thesis/progress/*}.
+\item PhonePe commit \f{257bf38e3095020f9f516c4c72c10bdc348781b1}. Periods \f{2018Q1}--\f{2026Q2} (34).
+      35 \f{state\_id} values; main sample 30 (\f{btpdata.states.MAIN\_SAMPLE}).
+\item Interim schema: \f{state\_id,period,variable,value,source}, in this order.
+\item Python modules run from the repo root: \f{PYTHONPATH=src/py .venv/bin/python -m btpdata.<module>}.
+      R scripts run from the repo root: \f{Rscript src/R/<script>.R}. R tests run with
+      \f{Rscript -e 'testthat::test\_dir("tests/R")'} (working directory \f{tests/R}, so tests use
+      \f{../../} paths).
+\item Scope: no CPI, no real values, no NPCI numbers, no maps, no $\beta$-regression (spec Section 2).
+\item Statistics across states use the 30 main-sample ids. Figures and tables show all 35 ids and mark the
+      five other union territories. Reference quarters: 2018Q4 and 2026Q2.
+\item Units: transactions in billion ($10^9$) or per person per quarter; amounts in Rs.\ or Rs.\ lakh crore
+      ($10^{12}$ rupees); users in million or per 1000 persons; population in million; shares in percent.
+\item Document text: ASD-STE100 vocabulary and sentence rules (common words, short sentences, active voice),
+      in paragraphs. No filler, idioms, hype words or value judgments. No reference to ``the student'', to
+      AI, or to plan task numbers. The author is Devansh Gupta.
+\item Every number in the document prose comes from \verb|\val{key}| or from an \verb|\input| table. File
+      paths, the commit hash, dates of access and section numbers are not numbers in this sense.
+\item New sources: one row in \f{references/source-log.csv} and one entry in \f{references/refs.bib}. PDFs
+      only in \f{references/pdfs/} (ignored by Git).
+\end{itemize}
+
+\section*{Review focus}
+\begin{enumerate}
+\item A type entry is absent from a state-quarter file (real case: Lakshadweep 2018Q1 \f{Utility}). Expect a
+      zero only when the other types sum to the hover count; else a stop that names the file.
+      Tested in Task~2 (\f{test\_zero\_fill}, \f{test\_absent\_type\_bad\_sum\_raises}).
+\item The raw clone already exists at the pinned commit with the old sparse set. Expect \f{fetch} to add the new
+      paths, not to return early. Tested in Task~1 (\f{test\_fetch\_extends\_sparse\_set}).
+\item Merged ids in the type data: Ladakh and Jammu and Kashmir are separate folders. Expect one
+      \f{jammu\_kashmir} row per type that is the sum. Tested in Task~2 (\f{test\_values}).
+\item A key used in the document has no value, or a value is \f{NA}/\f{Inf}. Expect the build to stop. Tested
+      in Task~4 (\f{test\_non\_finite}) and Task~6 (compile with an unknown key).
+\item Ties in ranks (equal values across states). Expect average ranks in the Spearman coefficient, as in the
+      Part 2 validation. Tested in Task~3 (\f{test\_spearman\_ties}).
+\end{enumerate}
+
+\section*{File map}
+\par\noindent\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.38\textwidth} Y@{}}
+\toprule
+File & Responsibility \\
+\midrule
+\f{src/py/btpdata/fetch\_phonepe.py} (modify) & sparse paths; re-apply a changed sparse set \\
+\f{src/py/btpdata/} \f{parse\_phonepe\_types.py} & count by type; checks $\to$ \f{data/interim/phonepe\_types.csv},
+  \f{phonepe\_checks.csv} \\
+\f{src/R/lib/state\_labels.csv} & \f{state\_id,name,code,in\_main} for the 35 ids \\
+\f{src/R/lib/part1\_fns.R} & loading, measures, national series, concentration, decomposition, ranks \\
+\f{src/R/lib/latex\_out.R} & number formatting, \f{numbers.tex} writer, table writer \\
+\f{src/R/lib/study\_theme.R} & ggplot2 theme, period axis, PDF save \\
+\f{src/R/part1\_study.R} & all study outputs under \f{output/study/part1/} \\
+\f{thesis/study/part1.tex}, \f{part1.pdf} & the study \\
+\f{tests/py/test\_fetch\_phonepe.py}, \f{test\_phonepe\_types.py}, \f{test\_state\_labels.py} & Python tests \\
+\f{tests/py/fixtures/phonepe\_types/} & fixture repository for the type parser \\
+\f{tests/R/test\_part1.R}, \f{test\_latex\_out.R} & R tests \\
+\f{Makefile} (modify) & \f{data}, \f{analysis}, \f{report} targets \\
+\bottomrule
+\end{tabularx}
+
+% =====================================================================
+\section{Task 1: Fetch the new PhonePe paths}
+\textbf{Files.} Modify \f{src/py/btpdata/fetch\_phonepe.py}. Create \f{tests/py/test\_fetch\_phonepe.py}.
+Changes \f{data/raw/phonepe/manifest.csv} (committed) and the ignored clone.
+
+\textbf{Interfaces (produces).}
+\f{SPARSE\_PATHS: list[str]} = the two current paths plus \f{data/aggregated/transaction/country/india} and
+\f{data/aggregated/user/country/india}.
+\f{fetch(dest: Path, commit: str = PHONEPE\_COMMIT, paths: list[str] | None = None, url: str = PHONEPE\_URL) -> Path}
+(\f{paths=None} means \f{SPARSE\_PATHS}).
+Behaviour: fresh clone as now, then \f{sparse-checkout set *paths}, checkout, manifest row. If the clone is at
+\f{commit} and \f{set(git sparse-checkout list) == set(paths)}: return, no manifest row. If the clone is at
+\f{commit} and the sets differ: \f{sparse-checkout set *paths}, then a manifest row. Manifest \f{notes}:
+\f{"git commit <commit>; sparse paths: <p1>;<p2>;..."}.
+
+\begin{steps}
+\item Write the failing tests. A fixture function makes a local Git repository in \f{tmp\_path/"src"} with one
+      file under each of the four paths (for example \f{<path>/2018/1.json} with \f{\{\}}) and one commit.
+\begin{verbatim}
+def test_fetch_extends_sparse_set(tmp_path):
+    src, sha = make_repo(tmp_path)
+    old = SPARSE_PATHS[:2]
+    repo = fetch(tmp_path / "raw", commit=sha, paths=old, url=str(src))
+    assert (repo / old[0] / "2018/1.json").exists()
+    assert not (repo / "data/aggregated/transaction/country/india/2018/1.json").exists()
+    fetch(tmp_path / "raw", commit=sha, paths=SPARSE_PATHS, url=str(src))
+    assert (repo / "data/aggregated/transaction/country/india/2018/1.json").exists()
+    rows = list(csv.DictReader(open(tmp_path / "raw/manifest.csv")))
+    assert len(rows) == 2 and "data/aggregated/user/country/india" in rows[1]["notes"]
+def test_fetch_same_set_no_new_row(tmp_path):
+    src, sha = make_repo(tmp_path)
+    fetch(tmp_path / "raw", commit=sha, paths=SPARSE_PATHS, url=str(src))
+    fetch(tmp_path / "raw", commit=sha, paths=SPARSE_PATHS, url=str(src))
+    assert len(list(csv.DictReader(open(tmp_path / "raw/manifest.csv")))) == 1
+def test_sparse_paths(): assert len(SPARSE_PATHS) == 4
+\end{verbatim}
+\item Run \f{.venv/bin/pytest tests/py/test\_fetch\_phonepe.py -v}. Expected: FAIL (\f{fetch} has no
+      \f{paths}/\f{url} argument).
+\item Implement. Use \f{\_git(repo, "sparse-checkout", "list").splitlines()} for the current set.
+\item Run the new tests and \f{.venv/bin/pytest -q}. Expected: all PASS.
+\item Run on real data: \f{PYTHONPATH=src/py .venv/bin/python -m btpdata.fetch\_phonepe}. Expected: exit 0;
+      \f{ls data/raw/phonepe/repo/data/aggregated/transaction/country/india/state | wc -l} prints 36;
+      \f{data/raw/phonepe/manifest.csv} has one new row.
+\item Check: \f{PYTHONPATH=src/py .venv/bin/python -m btpdata.parse\_phonepe \&\& git diff --exit-code data/interim/phonepe.csv}.
+      Expected: exit 0.
+\item Commit: \f{git add src/py/btpdata/fetch\_phonepe.py tests/py/test\_fetch\_phonepe.py data/raw/phonepe/manifest.csv}
+      and \f{git commit -m "feat: fetch PhonePe aggregated transaction and user paths"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 2: Transaction count by type, and data checks}
+\textbf{Files.} Create \f{src/py/btpdata/parse\_phonepe\_types.py}, \f{tests/py/test\_phonepe\_types.py},
+\f{tests/py/fixtures/phonepe\_types/data/...}. Modify \f{Makefile} (\f{data} target: add
+\f{\$(MOD).parse\_phonepe\_types} after \f{\$(MOD).parse\_phonepe}). Produces \f{data/interim/phonepe\_types.csv},
+\f{data/interim/phonepe\_checks.csv}.
+
+\textbf{Interfaces.} Consumes \f{parse\_phonepe.\_load}, \f{parse\_phonepe.HOVER}, \f{parse\_phonepe.SOURCE},
+\f{states.to\_state\_id}, \f{states.sum\_merged}, \f{periods.quarters}. Produces:
+\begin{itemize}
+\item \f{TYPES = \{"P2P": "phonepe\_count\_p2p", "Retail": "phonepe\_count\_retail", "Utility": "phonepe\_count\_utility"\}}.
+\item \f{folder\_to\_raw(folder: str) -> str}: \f{folder.replace("-", " ")}. The crosswalk does not change.
+\item \f{parse\_type\_file(path: Path) -> dict[str, int]}: type name $\to$ count of the \f{TOTAL} instrument;
+      a name outside \f{TYPES} raises \f{ValueError} with the name and the path.
+\item \f{build\_types(repo: Path, out: Path, checks\_out: Path, periods: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]}.
+\item \f{main()}: calls \f{build\_types} with the repository \f{data/raw/phonepe/repo}, the outputs
+      \f{data/interim/phonepe\_types.csv} and \f{data/interim/phonepe\_checks.csv}, and \f{quarters()}.
+\end{itemize}
+
+\textbf{Rules (spec Section 4.2).} For each period: the state folders are the subfolders of
+\f{data/aggregated/transaction/country/india/state/}. Each folder maps (via \f{folder\_to\_raw}) to one hover name of
+\f{map/transaction/hover} for that period; a hover name with no folder, or a folder with no hover name, raises
+\f{ValueError}. A missing type file raises \f{FileNotFoundError} (the path is in the message). An absent type is
+set to 0 only if the present types sum to the hover count; else \f{ValueError} naming the file. If the full sum
+differs from the hover count: \f{ValueError} naming the file. The national file
+\f{aggregated/transaction/country/india/<y>/<q>.json} (sum of its type counts) must equal the sum of hover counts,
+and \f{aggregated/user/country/india/<y>/<q>.json} (\f{registeredCount}) must equal the sum of
+\f{map/user/hover} counts; else \f{ValueError} naming the file. Then \f{sum\_merged} on the raw names, keys
+\f{["period","variable"]}; \f{source = SOURCE}.
+
+\textbf{Checks file.} Columns \f{check,n\_items,n\_flagged,max\_abs\_diff,note}, rows in this order:
+\par\noindent\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.38\textwidth} Y@{}}
+\f{type\_sum\_equals\_state\_total} & items: raw state-quarters; flagged 0 \\
+\f{absent\_type\_set\_to\_zero} & items: raw state-quarter-type slots ($3\times$ state-quarters); flagged: slots
+  set to 0; note: \f{"<folder> <period> <type>"} joined by \f{"; "} \\
+\f{national\_count\_equals\_state\_sum} & items: quarters; flagged 0 \\
+\f{national\_users\_equals\_state\_sum} & items: quarters; flagged 0 \\
+\end{tabularx}
+
+\begin{steps}
+\item Write the fixture repository \f{tests/py/fixtures/phonepe\_types/} for 2018Q1 (JSON layout as in the pinned
+      commit; see \f{parse\_phonepe.py} and the spec). Hover transactions: andhra pradesh (count 10862829,
+      amount 14001071206.72507), jammu \& kashmir (100, 1000.0), ladakh (10, 50.0). Hover users: 500, 40, 5.
+      Type files in folders \f{andhra-pradesh} (P2P 4000000, Retail 6000000, Utility 862829),
+      \f{jammu-\&-kashmir} (40, 50, 10), \f{ladakh} (6, 4, no Utility entry). National transaction file: P2P
+      4000046, Retail 6000054, Utility 862839. National user file: 545.
+\item Write the failing tests:
+\begin{verbatim}
+def test_folder_to_raw(): assert to_state_id(folder_to_raw("jammu-&-kashmir")) == "jammu_kashmir"
+def test_values(tmp_path):
+    df, chk = build_types(FIX, tmp_path/"t.csv", tmp_path/"c.csv", ["2018Q1"])
+    v = df.set_index(["state_id", "variable"]).value
+    assert v[("andhra_pradesh", "phonepe_count_utility")] == 862829
+    assert v[("jammu_kashmir", "phonepe_count_p2p")] == 46
+    assert v[("jammu_kashmir", "phonepe_count_retail")] == 54
+    assert v[("jammu_kashmir", "phonepe_count_utility")] == 10
+    assert list(df.columns) == ["state_id", "period", "variable", "value", "source"]
+def test_zero_fill(tmp_path):
+    _, chk = build_types(FIX, tmp_path/"t.csv", tmp_path/"c.csv", ["2018Q1"])
+    z = chk.set_index("check").loc["absent_type_set_to_zero"]
+    assert z.n_items == 9 and z.n_flagged == 1 and z.note == "ladakh 2018Q1 Utility"
+    assert chk.check.tolist() == ["type_sum_equals_state_total", "absent_type_set_to_zero",
+                                  "national_count_equals_state_sum", "national_users_equals_state_sum"]
+def test_sum_mismatch_raises(tmp_path):     # copy FIX; AP P2P -> 4000001
+    with pytest.raises(ValueError, match="andhra-pradesh/2018/1.json"): ...
+def test_absent_type_bad_sum_raises(tmp_path):  # copy FIX; ladakh Retail -> 3
+    with pytest.raises(ValueError, match="ladakh/2018/1.json"): ...
+def test_national_mismatch_raises(tmp_path):    # copy FIX; national P2P -> 4000047
+    with pytest.raises(ValueError, match="india/2018/1.json"): ...
+def test_unknown_type_raises(tmp_path):         # copy FIX; AP type name "Other"
+    with pytest.raises(ValueError, match="Other"): ...
+@pytest.mark.skipif(not REAL.exists(), reason="raw clone absent")
+def test_real_types_sum_to_count():
+    t = pd.read_csv("data/interim/phonepe_types.csv"); p = pd.read_csv("data/interim/phonepe.csv")
+    assert len(t) == 3570 and t.state_id.nunique() == 35
+    s = t.groupby(["state_id", "period"]).value.sum()
+    c = p[p.variable == "phonepe_count"].set_index(["state_id", "period"]).value
+    assert (s - c.loc[s.index]).abs().max() == 0
+\end{verbatim}
+\item Run \f{.venv/bin/pytest tests/py/test\_phonepe\_types.py -v}. Expected: FAIL (ImportError).
+\item Implement \f{parse\_phonepe\_types.py}.
+\item Run the tests. Expected: PASS except \f{test\_real\_types\_sum\_to\_count} (file not yet written).
+\item Run on real data: \f{PYTHONPATH=src/py .venv/bin/python -m btpdata.parse\_phonepe\_types}. Expected: exit 0;
+      \f{data/interim/phonepe\_checks.csv} gives \f{type\_sum\_equals\_state\_total} 1224/0,
+      \f{absent\_type\_set\_to\_zero} 3672/1 with note \f{lakshadweep 2018Q1 Utility}, and 34/0 for the two
+      national checks. If a check fails, stop and report the file and the values. Do not change a rule.
+\item Run \f{.venv/bin/pytest -q}. Expected: all PASS.
+\item Run \f{git diff --exit-code data/interim/phonepe.csv data/interim/population.csv data/final}. Expected: exit 0.
+\item Commit the module, tests, fixtures, \f{Makefile}, the two new interim files:
+      \f{git commit -m "feat: PhonePe transaction count by type, with data checks"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 3: State labels and the R measures library}
+\textbf{Files.} Create \f{src/R/lib/state\_labels.csv}, \f{tests/py/test\_state\_labels.py},
+\f{src/R/lib/part1\_fns.R}, \f{tests/R/test\_part1.R}. Modify \f{references/source-log.csv},
+\f{references/refs.bib}.
+
+\textbf{state\_labels.csv.} Columns \f{state\_id,name,code,in\_main}; 35 rows sorted by \f{state\_id};
+\f{in\_main} is \f{TRUE}/\f{FALSE}. Names: the official name; \f{jammu\_kashmir} is ``Jammu and Kashmir (with
+Ladakh)''; \f{dnh\_dd} is ``Dadra and Nagar Haveli and Daman and Diu''; \f{andaman\_nicobar} is ``Andaman and
+Nicobar Islands''. Codes: the ISO 3166-2:IN subdivision code without \f{IN-}. Expected codes (check each against
+the source and use the source value): AN AP AR AS BR CH CG DH DL GA GJ HR HP JK JH KA KL LD MP MH MN ML MZ NL OD
+PB PY RJ SK TN TG TR UP UK WB. Source: the Wikipedia page ``ISO 3166-2:IN''
+(\url{https://en.wikipedia.org/wiki/ISO_3166-2:IN}); log it as \f{D11} in \f{source-log.csv} (type
+\f{dataset}, used for ``two-letter state codes for figure labels'') and as \f{@misc\{iso3166\_2\_in, ...\}} in
+\f{refs.bib} with \f{srcid = \{D11\}} and the access date.
+
+\textbf{Interfaces (produces, \f{part1\_fns.R}).} All data are \f{data.table}. \f{periods} are \f{"YYYYQn"}.
+\begin{itemize}
+\item \f{load\_part1(phonepe, types, population, labels) -> data.table}: one row per \f{state\_id}, \f{period}
+      (1190 rows on real data), columns \f{state\_id, period, name, code, in\_main, count, amount, users,
+      population, count\_p2p, count\_retail, count\_utility}. Stops if a state-period is missing in any input.
+\item \f{add\_measures(dt) -> dt} adds \f{count\_pc} ($C/P$), \f{amount\_pc} ($A/P$), \f{users\_per\_1000}
+      ($1000U/P$), \f{intensity} ($C/U$), \f{atv} ($A/C$), \f{share\_p2p}, \f{share\_retail},
+      \f{share\_utility} ($C^k/C$, fractions).
+\item \f{national(dt) -> data.table}: by period, sums of \f{count, amount, users, population, count\_*}, then the
+      same measures as \f{add\_measures}, plus \f{qoq\_count}, \f{qoq\_amount} (percent change on the previous
+      quarter; \f{NA} for 2018Q1).
+\item \f{annual(nat) -> data.table}: one row per calendar year; \f{year} (character; \f{"2026 (Q1--Q2)"} for the
+      last), \f{count} and \f{amount} (sums), \f{users} (last quarter of the year), \f{count\_pc} (count / mean
+      population), \f{atv}, \f{growth\_count} (percent on the previous full year; \f{NA} for 2018 and 2026).
+\item \f{years\_between(start, end) -> numeric}: (quarter index of end $-$ quarter index of start) / 4.
+\item \f{annual\_rate(x0, x1, years) -> numeric}: $100\,((x_1/x_0)^{1/\text{years}} - 1)$.
+\item \f{spread(dt, var, ids) -> data.table}: by period, \f{med}, \f{q1}, \f{q3} (R type-7 quantiles) of \f{var} over
+      \f{ids}.
+\item \f{top\_k(dt, per, k = 5) -> data.table}: the \f{k} ids with the largest \f{count} in \f{per} (all 35), with
+      columns \f{variable} (\f{count, amount, users, population}) and \f{share} (percent of the 35-id total
+      held by these \f{k} ids).
+\item \f{n\_for\_share(x, s = 0.5) -> integer}: the smallest number of units, largest first, whose sum is at least
+      \f{s} of the total.
+\item \f{spearman(x, y) -> numeric}: Pearson correlation of \f{rank(x)} and \f{rank(y)} (average ranks).
+\item \f{decompose(dt, per, ids) -> list}: \f{n}, \f{var\_y}, \f{var\_r}, \f{var\_i}, \f{cov\_ri}, \f{reach},
+      \f{intensity} with $y=\ln(C/P)$, $r=\ln(U/P)$, $i=\ln(C/U)$ over \f{ids} in \f{per}; sample variances
+      ($n-1$); $\text{reach} = \operatorname{cov}(r,y)/\operatorname{var}(y)$,
+      $\text{intensity} = \operatorname{cov}(i,y)/\operatorname{var}(y)$.
+\item \f{decompose\_series(dt, ids) -> data.table}: \f{decompose} for each period, one row per period.
+\end{itemize}
+
+\begin{steps}
+\item Write \f{state\_labels.csv} and log the source in both files.
+\item Write \f{tests/py/test\_state\_labels.py}: the \f{state\_id} set equals \f{ALL\_IDS}; the \f{in\_main}
+      \f{TRUE} set equals \f{MAIN\_SAMPLE}; codes are two upper-case letters and unique. Run it. Expected: PASS.
+\item Write the failing R tests in \f{tests/R/test\_part1.R} (source \f{../../src/R/lib/part1\_fns.R}):
+\begin{verbatim}
+test_that("decompose terms sum to 1", {   # 4 states, C/U/P chosen by hand
+  d <- data.table(state_id = letters[1:4], period = "2020Q1", count = c(10, 40, 90, 160),
+                  users = c(5, 10, 15, 20), population = c(100, 100, 100, 100))
+  r <- decompose(d, "2020Q1", letters[1:4])
+  expect_equal(r$reach + r$intensity, 1); expect_equal(r$n, 4L)
+  expect_equal(r$var_y, var(log(d$count / 100)))
+})
+test_that("top_k", {   # counts 50, 30, 10, 10; population 1, 1, 1, 7
+  ...; expect_equal(t[variable == "count"]$share, 80); expect_equal(t[variable == "population"]$share, 20)
+})
+test_that("n_for_share", { expect_equal(n_for_share(c(50, 30, 10, 10)), 1L)
+                           expect_equal(n_for_share(c(40, 30, 20, 10)), 2L) })
+test_that("spearman_ties", { expect_equal(spearman(c(1, 2, 2, 3), c(1, 2, 3, 4)),
+                                          cor(c(1, 2.5, 2.5, 4), 1:4)) })
+test_that("annual_rate", { expect_equal(annual_rate(100, 121, 2), 10)
+                           expect_equal(years_between("2018Q4", "2026Q2"), 7.5) })
+test_that("national qoq", { # 2 states; count 10 and 10 in 2020Q1, 15 and 15 in 2020Q2
+  expect_equal(n$qoq_count, c(NA, 50)) })
+test_that("annual", { 8 quarters of 2018-2019 with count 1 each; expect_equal(a$count, c(4, 4))
+                      expect_equal(a$growth_count[2], 0) })
+test_that("load_part1 stops on a missing state-period", { ... expect_error(..., "missing") })
+\end{verbatim}
+\item Run \f{Rscript -e 'testthat::test\_dir("tests/R")'}. Expected: the new tests FAIL (functions not found).
+\item Implement \f{part1\_fns.R}.
+\item Run the R tests and \f{.venv/bin/pytest -q}. Expected: all PASS.
+\item Commit: \f{git commit -m "feat: state labels and Part 1 study measures (R)"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 4: LaTeX output writers (R)}
+\textbf{Files.} Create \f{src/R/lib/latex\_out.R}, \f{tests/R/test\_latex\_out.R}.
+
+\textbf{Interfaces (produces).}
+\begin{itemize}
+\item \f{fmt(x, digits) -> character}: fixed decimals; thousands separator \verb|{,}| in the integer part; minus as
+      \verb|$-$|. Example: \f{fmt(38664.285, 1)} is \verb|38{,}664.3|; \f{fmt(-10.56, 1)} is \verb|$-$10.6|.
+\item \f{latex\_escape(x) -> character}: escapes \verb|& % $ # _ { }|.
+\item \f{nv(key, value, digits = NULL, source) -> data.table}: one entry; numeric values go through \f{fmt};
+      character values through \f{latex\_escape}. Stops if \f{key} does not match
+      \verb|^[a-z][a-z0-9_]*(\.[A-Za-z0-9_]+)*$| or if a numeric value is not finite.
+\item \f{write\_numbers(entries, path, generator)}: stops on a duplicate key; writes a header comment
+      (\f{generated by <generator>; do not edit}) and one line per entry:
+      \verb|\defval{<key>}{<value>}  % <source>|, in the order given.
+\item \f{write\_tabular(cells, path, align, header, env = "tabular", caption = NULL, label = NULL)}: \f{cells} is a
+      character table (already formatted); writes \verb|\begin{<env>}{<align>}|, \verb|\toprule|, \f{header}
+      (raw LaTeX, may span lines), \verb|\midrule|, rows joined by \verb|&| and ended by \verb|\\|,
+      \verb|\bottomrule|, \verb|\end{<env>}|. For \f{env = "longtable"}: \f{caption} and \f{label} at the top,
+      then \verb|\endfirsthead| with the header repeated and \verb|\endhead|. Stops if the column count of
+      \f{cells} differs from the count of column letters in \f{align}.
+\end{itemize}
+
+\begin{steps}
+\item Write the failing tests (\f{test\_latex\_out.R}): \f{fmt} examples above and \f{fmt(0.0000015, 7)} is \f{0.0000015};
+      \f{latex\_escape("A \& B\_1")} is \verb|A \& B\_1|; \f{test\_bad\_key} (\f{"Nat.count"} and
+      \f{"nat count"} stop); \f{test\_non\_finite} (\f{nv("a.b", NA\_real\_, 1, "x")} and \f{Inf} stop);
+      \f{test\_duplicate} (two entries with one key stop); \f{test\_numbers\_file} (written file has the
+      header line and \verb|\defval{a.b}{1.5}  % src|); \f{test\_tabular} (two rows, \f{align = "lr"}: file
+      text equals the expected string; three cells with \f{"lr"} stops).
+\item Run \f{Rscript -e 'testthat::test\_dir("tests/R")'}. Expected: new tests FAIL.
+\item Implement \f{latex\_out.R} with base R only.
+\item Run the R tests. Expected: all PASS.
+\item Commit: \f{git commit -m "feat: LaTeX number and table writers (R)"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 5: Study script: figures, tables, numbers}
+\textbf{Files.} Create \f{src/R/lib/study\_theme.R}, \f{src/R/part1\_study.R}. Modify \f{Makefile}
+(\f{analysis}: add \f{Rscript src/R/part1\_study.R}). Produces \f{output/study/part1/\{figures,tables\}/*},
+\f{output/study/part1/numbers.tex}.
+
+\textbf{Interfaces.} Consumes Tasks 3 and 4. \f{study\_theme.R} produces \f{theme\_study()} (the theme of
+\f{01\_descriptives.R}: base size 9, sans, palette \f{\#0b0b0b}, \f{\#52514e}, grid \f{\#e6e5e1}; series colours
+\f{\#2a78d6}, \f{\#d6762a}, \f{\#3a9a5b}), \f{period\_num(p)} (year + (quarter $-$ 1)/4) and
+\f{save\_fig(p, name, w = 6.3, h)} (PDF to \f{output/study/part1/figures/}). Do not edit
+\f{01\_descriptives.R}.
+
+\textbf{Figures} (\f{output/study/part1/figures/}; every figure: axis titles with units, caption-free, sample
+named in the document caption).
+\par\noindent\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.38\textwidth} Y@{}}
+\toprule
+File & Content \\
+\midrule
+\f{national\_totals.pdf} & three panels, free y scales, by quarter: count (billion), amount (Rs.\ lakh crore),
+  registered users (million). $h=2.9$. \\
+\f{national\_growth.pdf} & bars of \f{qoq\_count} and \f{qoq\_amount} (two panels), 2018Q2--2026Q2; zero line.
+  $h=3.0$. \\
+\f{avg\_value.pdf} & national \f{atv} line; median and interquartile band of state \f{atv} (main sample). $h=3.2$. \\
+\f{type\_shares.pdf} & national \f{share\_*} in percent, three lines with direct labels. $h=3.2$. \\
+\f{state\_count\_pc.pdf} & dot plot, 35 rows sorted by 2026Q2 \f{count\_pc}; hollow dot 2018Q4, filled dot
+  2026Q2, segment between; log x axis (transactions per person per quarter); y labels are names; the five other
+  union territories in grey text. $h=6.5$. \\
+\f{reach\_intensity.pdf} & 2026Q2 scatter: x \f{users\_per\_1000}, y \f{intensity} (transactions per user per
+  quarter); text labels \f{code}; other union territories in grey. $h=4.0$. \\
+\f{decomposition.pdf} & by quarter, main sample: panel 1 \f{var\_y}, \f{var\_r}, \f{var\_i}; panel 2 \f{reach} and
+  \f{intensity} contributions. $h=3.2$. \\
+\f{retail\_share.pdf} & 2026Q2 scatter: x \f{count\_pc} (log), y \f{share\_retail} (percent); labels \f{code}.
+  $h=4.0$. \\
+\f{population\_growth.pdf} & bars, 35 ids sorted: percent change of population 2018Q1 to 2026Q2. $h=6.0$. \\
+\bottomrule
+\end{tabularx}
+
+\textbf{Tables} (\f{output/study/part1/tables/}, through \f{write\_tabular}).
+\par\noindent\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.38\textwidth} Y@{}}
+\toprule
+File & Content \\
+\midrule
+\f{units.tex} & longtable (caption ``The 35 state units'', label \f{tab:units}): name, \f{state\_id}, code, main
+  sample (Yes/No), PhonePe raw names, NCP raw names (from \f{state\_crosswalk.csv} rows that occur in
+  \f{data/manual/population\_ncp2020.csv} and in the 2026Q2 PhonePe hover file; joined by ``; ''). \\
+\f{checks.tex} & the four rows of \f{phonepe\_checks.csv} with plain-text descriptions, plus two population rows:
+  NCP state sum / India for 2018 and for 2027 (7 decimals), and missing population cells in 1190 (0). \\
+\f{national\_annual.tex} & \f{annual()}: year, count (billion, 2 dec.), amount (Rs.\ lakh crore, 2), users at
+  year end (million, 1), transactions per person (1), average value (Rs., 0), growth of count (percent, 1;
+  ``--'' for \f{NA}). \\
+\f{state\_2026q2.tex} & 35 rows sorted by \f{count\_pc} descending: name, population (million, 2), transactions
+  per person (1), amount per person (Rs., 0), users per 1000 (0), transactions per user (1), average value (Rs., 0),
+  retail share (percent, 1). Other union territories marked with a dagger and a note line. \\
+\f{concentration.tex} & rows count, amount, users, population; columns: share of the top five (by count) in
+  2018Q4 and in 2026Q2 (percent, 1); last row: states needed for half of all transactions. \\
+\f{decomposition.tex} & columns 2018Q4, 2026Q2; rows $n$, $\operatorname{var}(y)$, $\operatorname{var}(r)$,
+  $\operatorname{var}(i)$, $2\operatorname{cov}(r,i)$, reach contribution, intensity contribution (3 dec.). \\
+\bottomrule
+\end{tabularx}
+
+\textbf{Numbers} (\f{output/study/part1/numbers.tex}). Families, with \f{<p>} in \{2018Q1, 2018Q4, 2026Q2\}
+unless stated. Decimals in brackets. Names are character values.
+\begin{longtable}{@{}p{0.42\textwidth} p{0.53\textwidth}@{}}
+\toprule
+Key & Definition \\
+\midrule
+\endhead
+\f{data.n\_ids}, \f{data.n\_main}, \f{data.n\_other\_ut}, \f{data.n\_variants}, \f{data.n\_quarters},
+  \f{data.n\_phonepe\_names} & 35, 30, 5, crosswalk rows, 34, raw hover names in 2026Q2 [0] \\
+\f{data.rows.phonepe}, \f{data.rows.types}, \f{data.rows.population} & rows of the interim files [0] \\
+\f{check.type\_sum.n}, \f{check.type\_sum.flagged}, \f{check.zero\_fill.n}, \f{check.zero\_fill.flagged},
+  \f{check.nat\_count.n}, \f{check.nat\_count.flagged}, \f{check.nat\_users.n}, \f{check.nat\_users.flagged}
+  & from \f{phonepe\_checks.csv} [0] \\
+\f{pop.ncp\_ratio.2018}, \f{pop.ncp\_ratio.2027} & sum of NCP state rows / India row [7] \\
+\f{pop.total.2018Q1}, \f{pop.total.2026Q2}, \f{pop.growth\_pct} & million [1]; percent change [1] \\
+\f{pop.growth.max.name}, \f{pop.growth.max}, \f{pop.growth.min.name}, \f{pop.growth.min} & 35 ids, percent
+  change 2018Q1--2026Q2 [1] \\
+\f{nat.count.<p>}, \f{nat.amount.<p>}, \f{nat.users.<p>} & billion [2], Rs.\ lakh crore [2], million [1] \\
+\f{nat.count\_ratio}, \f{nat.amount\_ratio}, \f{nat.users\_ratio} & 2026Q2 / 2018Q1 [0] \\
+\f{nat.count\_rate}, \f{nat.amount\_rate}, \f{nat.users\_rate} & \f{annual\_rate}, 2018Q4 to 2026Q2, percent per
+  year [1] \\
+\f{nat.count\_pc.<p>}, \f{nat.users\_per\_1000.<p>} & national [1], [0] \\
+\f{nat.qoq.count.2020Q2}, \f{nat.qoq.amount.2020Q2}, \f{nat.n\_qoq\_neg\_count} & percent [1]; quarters with
+  \f{qoq\_count} $<0$ [0] \\
+\f{nat.qoq.count.median\_last8} & median \f{qoq\_count} of 2024Q3--2026Q2 [1] \\
+\f{nat.n\_states\_fall.2020Q2} & ids (of 35) with a fall in count in 2020Q2 [0] \\
+\f{nat.atv.2018Q1}, \f{nat.atv.peak}, \f{nat.atv.peak\_period}, \f{nat.atv.2026Q2} & Rs.\ [0]; period of the
+  maximum (character) \\
+\f{nat.share.p2p.<p>}, \f{nat.share.retail.<p>}, \f{nat.share.utility.<p>} & percent [1] \\
+\f{nat.share.retail.min2018}, \f{nat.share.retail.max2018} & minimum and maximum over 2018Q1--2018Q4 [1] \\
+\f{st.count\_pc.max.name.<q>}, \f{st.count\_pc.max.<q>}, \f{st.count\_pc.min.name.<q>}, \f{st.count\_pc.min.<q>},
+  \f{st.count\_pc.maxmin.<q>} & main sample, $q \in$ \{2018Q4, 2026Q2\} [1]; max/min ratio [1] \\
+\f{st.users\_per\_1000.max.name}, \f{st.users\_per\_1000.max}, \f{st.users\_per\_1000.min.name},
+  \f{st.users\_per\_1000.min} & main sample, 2026Q2 [0] \\
+\f{st.intensity.max.name}, \f{st.intensity.max}, \f{st.intensity.min.name}, \f{st.intensity.min} & main sample,
+  2026Q2 [1] \\
+\f{st.rank\_cor} & \f{spearman} of \f{count\_pc} 2018Q4 against 2026Q2, main sample [3] \\
+\f{st.reach\_intensity\_cor} & \f{spearman} of \f{users\_per\_1000} and \f{intensity}, 2026Q2, main [3] \\
+\f{conc.top5.names.<q>}, \f{conc.top5.count.<q>}, \f{conc.top5.population.<q>}, \f{conc.n\_half.<q>} & names
+  joined by ``, '' and ``and''; percent [1]; integer \\
+\f{dec.<q>.var\_y}, \f{dec.<q>.var\_r}, \f{dec.<q>.var\_i}, \f{dec.<q>.reach}, \f{dec.<q>.intensity} & [3] \\
+\f{dec.var\_y.max}, \f{dec.var\_y.max\_period} & maximum of \f{var\_y} over quarters [3]; its period \\
+\f{retail.cor.2026Q2} & \f{spearman} of \f{share\_retail} and \f{count\_pc}, 2026Q2, main [3] \\
+\f{retail.max.name}, \f{retail.max}, \f{retail.min.name}, \f{retail.min} & main sample, 2026Q2, percent [1] \\
+\bottomrule
+\end{longtable}
+Each entry has a \f{source} comment: the function and the input (for example
+\f{national(); data/interim/phonepe.csv}). The prose tasks may need more keys; they add them in this script
+with the same rules and a test-free review.
+
+\begin{steps}
+\item Write \f{study\_theme.R} and \f{part1\_study.R}. The script sources the three libraries, reads the
+      inputs with \f{load\_part1}, builds the figures, tables and numbers above, and calls
+      \f{write\_numbers(..., generator = "Rscript src/R/part1\_study.R")}.
+\item Run \f{Rscript src/R/part1\_study.R}. Expected: exit 0; 9 PDF files; 6 \f{.tex} tables;
+      \f{grep -c defval output/study/part1/numbers.tex} is at least 100.
+\item Check values against the scratch run in the spec: \f{dec.2018Q4.reach} is 0.776, \f{dec.2026Q2.intensity}
+      is 0.614, \f{st.rank\_cor} is 0.892, \f{nat.count.2026Q2} is 38.66, \f{check.zero\_fill.flagged} is 1.
+      A difference means a defect in the code; find it before you continue.
+\item Look at each PDF (Read tool). Check: no clipped labels, no overlapping text that hides a value, axis units
+      present. Fix and run again.
+\item Run the script a second time and \f{git diff --exit-code output/study/part1/tables output/study/part1/numbers.tex}
+      after a commit of the first run (determinism). Expected: exit 0.
+\item Run \f{Rscript -e 'testthat::test\_dir("tests/R")'}. Expected: all PASS.
+\item Commit the two R files, \f{Makefile} and \f{output/study/part1/}:
+      \f{git commit -m "feat: Part 1 study figures, tables and computed numbers"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 6: Study document skeleton}
+\textbf{Files.} Create \f{thesis/study/part1.tex}. Modify \f{Makefile} (\f{report}: add
+\verb|cd thesis/study && for f in part*.tex; do latexmk -pdf -interaction=nonstopmode $$f || exit 1; done|).
+Modify \f{.gitignore} only if needed so that \f{thesis/study/part1.pdf} is tracked (it is tracked today: only
+\f{thesis/btp1/main.pdf} is ignored).
+
+\textbf{Preamble.} As \f{thesis/progress/part3.tex}, plus \f{tikz} (library \f{arrows.meta, positioning}),
+\f{longtable}, \f{caption} (\f{font=small}). \verb|\graphicspath{{../../output/study/part1/figures/}}|. After
+\f{hyperref}:
+\begin{verbatim}
+\makeatletter
+\newcommand{\defval}[2]{\expandafter\def\csname val@#1\endcsname{#2}}
+\newcommand{\val}[1]{\ifcsname val@#1\endcsname\csname val@#1\endcsname\else
+  \PackageError{study}{Unknown value key `#1'}{Run Rscript src/R/part1_study.R}\fi}
+\makeatother
+\input{../../output/study/part1/numbers.tex}
+\end{verbatim}
+Title: ``Digital payment adoption across Indian states, 2018--2026: building the state panel from PhonePe Pulse''
+with the line ``BTP study, Part 1''; author Devansh Gupta; date November 2026.
+
+\textbf{Sections} (labels in brackets): Abstract; 1 Introduction [\f{sec:intro}]; 2 Data sources [\f{sec:data}];
+3 Construction of the panel [\f{sec:construction}]; 4 Adoption in India as a whole [\f{sec:national}];
+5 Adoption across states [\f{sec:states}]; 6 Limitations of the data [\f{sec:limits}]; 7 Conclusions
+[\f{sec:conclusions}]; References; Appendix A The 35 state units [\f{app:units}]; Appendix B Reproduction
+[\f{app:repro}]. Subsections as in the spec Section 4.4.
+
+\begin{steps}
+\item Create the file with the preamble, all section and subsection headings, and every float: Figure
+      \f{fig:flow} (TikZ: boxes for the three raw sources $\to$ the three Python modules $\to$ the four interim
+      files $\to$ \f{part1\_study.R} $\to$ figures, tables, numbers); figures \f{fig:<file>} for the nine PDFs;
+      tables \f{tab:files} (data files used: hand-written \f{tabular}, file counts by \verb|\val|),
+      \f{tab:checks}, \f{tab:annual}, \f{tab:states}, \f{tab:concentration}, \f{tab:decomposition}
+      (\verb|\input| of the generated files), and \verb|\input| of \f{units.tex} in Appendix A. Each float has its
+      final caption (unit, sample, period, source with \verb|\citep|). Under each heading, one \verb|%| comment
+      line says what the section will contain (from spec Section 4.4).
+\item Write Appendix B now: the command sequence \f{make data analysis report}, the pinned commit, the input
+      files, and the statement that \f{numbers.tex} is generated and not edited.
+\item Run \f{cd thesis/study \&\& latexmk -pdf -interaction=nonstopmode part1.tex}. Expected: exit 0;
+      \f{grep -E "undefined|Unknown value key" part1.log} prints nothing; no \f{Overfull} line wider than 1\,pt.
+\item Negative check: add \verb|\val{no.such.key}| to the body, compile, see the error \f{Unknown value key},
+      remove the line.
+\item Commit \f{thesis/study/part1.tex}, \f{part1.pdf}, \f{Makefile}:
+      \f{git commit -m "docs: Part 1 study skeleton with figures and tables"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 7: Prose, Sections 1--3}
+\textbf{Files.} Modify \f{thesis/study/part1.tex}; if a new key is needed, \f{src/R/part1\_study.R} and the
+regenerated \f{output/study/part1/numbers.tex}.
+
+\textbf{Content.}
+\begin{description}
+\item[1 Introduction] (4--6 paragraphs). The BTP question (adoption and financial inclusion across states,
+  \f{proposal.txt}). Why a state panel over time is necessary. NPCI state data only from April 2025
+  (cite \f{npci\_upi\_state}, \f{medianama2025npci}); therefore PhonePe Pulse (\f{phonepe\_pulse}), used before by
+  Reddy, Kedia and Shukla (\f{reddy2024icrier}, with \verb|\citet|). The aim of this part: build the state-quarter panel of PhonePe adoption and its
+  population denominator, check it, and describe it in nominal terms. The contents of each section. One sentence
+  each on Part 2 (price deflation, comparison with NPCI, maps) and Part 3 (convergence analysis).
+\item[2 Data sources] PhonePe Pulse: what it is; licence CDLA-Permissive-2.0; the pinned commit and its date;
+  the three folders; the restatement of the series from 2018Q1 and the README rule against joins with earlier
+  releases; the files used and their content (Table \f{tab:files}); the type definitions; the files not used and
+  why (spec Section 4.2). NCP 2020 (\f{ncp2020}): the report, Table 8, 1 March reference date, thousands,
+  years 2018--2027, cohort-component projections from the 2011 Census. Figure \f{fig:flow}.
+\item[3 Construction] 3.1 State units: the crosswalk, its name variants (key \f{data.n\_variants}), the 35 ids, merged ids
+  (Ladakh into Jammu and Kashmir; Dadra and Nagar Haveli and Daman and Diu), the main sample and the five other
+  union territories; reference to Appendix A. 3.2 Parsing and checks: the summation rule for merged ids; the
+  stop rules; Table \f{tab:checks} with the numbers; the zero-filled entry. 3.3 Population: the formula
+  $P_{y,q} = P_y + \frac{q-1}{4}(P_{y+1}-P_y)$, why 2027 is needed, the NCP sum ratios, Figure
+  \f{fig:population\_growth} with the highest and lowest growth. 3.4 Measures: the formulas of spec Section 4.3,
+  each with its unit and meaning, and the decomposition identity.
+\end{description}
+
+\begin{steps}
+\item Write the prose. Every number is \verb|\val{...}| or in a table. Each figure and table is introduced before
+      it appears and explained after (what it shows, then what the numbers mean).
+\item Compile as in Task 6. Expected: same checks pass.
+\item Run the banned-word check:
+\begin{verbatim}
+grep -nwiE "very|significant(ly)?|robust|dramatic(ally)?|huge|clearly|obviously|interestingly|
+  notably|crucial|leverage|boost|massive|remarkabl[ey]|impressive|explosive|journey|landscape|
+  delve|student|AI|Task" thesis/study/part1.tex | grep -v '^[0-9]*:\s*%'
+\end{verbatim}
+      (one line in the shell). Expected: no output, except words inside citation keys.
+\item Read the PDF pages of Sections 1--3. Check: sentences of 25 words or fewer in descriptive text; active voice;
+      no claim of a cause without evidence.
+\item Commit \f{part1.tex}, \f{part1.pdf} (and the script and \f{numbers.tex} if changed):
+      \f{git commit -m "docs: Part 1 study, introduction, data and construction"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 8: Prose, Sections 4--7 and the abstract}
+\textbf{Files.} As Task 7.
+
+\textbf{Content.}
+\begin{description}
+\item[4 India as a whole] Figure \f{fig:national\_totals} and Table \f{tab:annual}: levels and ratios
+  2018Q1--2026Q2, annual rates 2018Q4--2026Q2. Figure \f{fig:national\_growth}: the 2020Q2 fall (the only quarter
+  with a fall in the national count; number of states with a fall), the lower growth in the last eight quarters.
+  Figure \f{fig:avg\_value}: rise to the peak, then fall; state band. Figure \f{fig:type\_shares}: the 2018 swing,
+  then the rise of the retail share. Interpretation only where the data show it: for example, a lower average
+  value at the same time as a higher retail share is consistent with more small merchant payments; the data do
+  not give the value by type, so the text says that this is not tested.
+\item[5 Across states] Figure \f{fig:state\_count\_pc} and Table \f{tab:states}: highest and lowest, max/min
+  ratios in 2018Q4 and 2026Q2, rank persistence. Table \f{tab:concentration}: top five against their population
+  share; states for half of all transactions. Figure \f{fig:reach\_intensity}: reach and intensity, extremes,
+  their rank correlation. Figure \f{fig:decomposition} and Table \f{tab:decomposition}: reach explained most of
+  the cross-state variance in 2018Q4, intensity in 2026Q2 (use the values); the peak of \f{var\_y}. Figure
+  \f{fig:retail\_share}: the rank correlation and the extremes.
+\item[6 Limitations] One paragraph each: one app, with its share of UPI a Part 2 question; registered users are a
+  cumulative count (no fall in any state-quarter is consistent with this) and not active users; state attribution
+  method not documented in the repository; projections, not counts; nominal values; type shares in 2018.
+\item[7 Conclusions] Four to six findings, each with its number, and what Parts 2 and 3 take from the panel.
+\item[Abstract] 150--250 words: data, method, the main numbers.
+\end{description}
+
+\begin{steps}
+\item Write the prose with the rules of Task 7.
+\item Compile, banned-word check and PDF read as in Task 7.
+\item Check the page count: \f{pdfinfo thesis/study/part1.pdf | grep Pages}. Expected: 20 to 30.
+\item Commit: \f{git commit -m "docs: Part 1 study, results, limitations and conclusions"}.
+\end{steps}
+
+% =====================================================================
+\section{Task 9: Full rebuild, checks and tag}
+\textbf{Files.} No new files expected. Fixes go to the file that owns the defect.
+
+\begin{steps}
+\item Run \f{make test}. Expected: pytest all pass; R tests 0 failures.
+\item Run \f{make data analysis report}. Expected: exit 0.
+\item Run \f{git status --short}. Expected: only figure PDFs (creation date) and LaTeX PDFs show as changed. Run
+      \f{git diff --exit-code data/ output/tables output/study/part1/tables output/study/part1/numbers.tex}.
+      Expected: exit 0. Restore the changed PDFs that are not part of this work with \f{git checkout --}
+      (\f{output/figures/*.pdf}, \f{thesis/btp1-slides/slides.pdf}, \f{thesis/progress/*.pdf}).
+\item Check every \verb|\val| key in the document exists:
+\begin{verbatim}
+comm -23 <(grep -o '\\val{[^}]*}' thesis/study/part1.tex | sed 's/\\val{\(.*\)}/\1/' | sort -u) \
+         <(grep -o '^\\defval{[^}]*}' output/study/part1/numbers.tex | sed 's/\\defval{\(.*\)}/\1/' | sort -u)
+\end{verbatim}
+      Expected: no output (the compile also enforces this).
+\item Check the document has no reference to ``student'', ``AI'', ``Task'' or ``progress report''
+      (\f{grep -niwE "student|AI|Task|progress report" thesis/study/part1.tex}). Expected: no match outside comments.
+\item Commit the rebuilt \f{thesis/study/part1.pdf} if it changed:
+      \f{git commit -m "build: rebuild Part 1 study"}.
+\item Create the tag (do not push): \f{git tag -a part1-study -m "Part 1 study: PhonePe Pulse state panel, 2018--2026"}.
+      Check: \f{git tag -n | grep part1}. Expected: \f{part1} (unchanged) and \f{part1-study}.
+\end{steps}
+
+\end{document}
