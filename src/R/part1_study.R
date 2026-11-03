@@ -136,6 +136,11 @@ for (s in c("max", "min")) {
 r <- pick(pg[state_id %in% main_ids], "growth", TRUE)
 add("pop.growth.main.max.name", r$name, NULL, paste0("main sample; ", F_POP))
 add("pop.growth.main.max", r$growth, 1, paste0("percent change 2018Q1-2026Q2, main sample; ", F_POP))
+pg_main <- pg[state_id %in% main_ids][order(-growth, state_id)]
+add("pop.growth.main.top2to4.names", join_and(pg_main$name[2:4]), NULL,
+    paste0("main sample, growth ranks 2 to 4 from the top; ", F_POP))
+add("pop.growth.main.bottom2to4.names", join_and(pg_main$name[(nrow(pg_main) - 1L):(nrow(pg_main) - 3L)]), NULL,
+    paste0("main sample, growth ranks 2 to 4 from the bottom, smallest growth first; ", F_POP))
 
 # national
 SRC_NAT <- paste0("national(); ", F_PHONEPE)
