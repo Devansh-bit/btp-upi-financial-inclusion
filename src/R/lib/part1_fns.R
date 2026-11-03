@@ -24,6 +24,8 @@ load_part1 <- function(phonepe, types, population, labels) {
   out <- copy(grid)
   for (nm in names(inputs)) {
     d <- as.data.table(inputs[[nm]]$d)
+    # fread reads large whole numbers as integer64; read with fread(..., integer64 = "double")
+    if (inherits(d$value, "integer64")) stop(sprintf("value in %s is integer64", nm))
     extra <- setdiff(unique(d$state_id), labels$state_id)
     if (length(extra) > 0)
       stop(sprintf("unknown state_id in %s: %s", nm, paste(extra, collapse = ", ")))

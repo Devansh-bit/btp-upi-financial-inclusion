@@ -114,4 +114,6 @@ test_that("load_part1 joins and stops on a missing state-period", {
   expect_error(load_part1(pp, ty, pop[1], lab), "missing")
   expect_error(load_part1(pp[state_id == "a" | variable != "phonepe_users"], ty, pop, lab),
                "missing")
+  ty64 <- copy(ty)[, value := structure(value, class = "integer64")]
+  expect_error(load_part1(pp, ty64, pop, lab), "integer64")
 })
